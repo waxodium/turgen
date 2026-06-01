@@ -13,18 +13,21 @@
 void enableRaw(struct termios *orgTerminal);
 void disableRaw(struct termios *orgTerminal);
 void execute(char *buffer);
-void arrows(char *inputBuffer, int *inputLength, char *prompt, int *totalHistoryCount, int *historyIndex, char historyList[10][1024]);
+void arrows(char *inputBuffer, int *cursor, int *inputLength, char *prompt, int *total, int *historyIndex, char historyList[10][1024]);
 
 struct termios cookedTerminal;
 
 int main() {
     char buffer[1024];
-    int position = 0;
     char character;
-    char prompt[] = "fash ~> ";
     char history[10][1024];
+    
     int count = 0;
+    int length = 0;
+    int cursor = 0;
     int historyPosition = -1;
+    
+    char prompt[] = "fash ~> ";
 
     enableRaw(&cookedTerminal);
 
@@ -41,7 +44,8 @@ int main() {
         if (bytes == -1) {
             if (errno == EINTR) {
                 sout("\r\n");
-                position = 0;
+                length = 0;
+                cursor = 0;
                 sout("%s", prompt);
                 continue;
             }
@@ -52,26 +56,37 @@ int main() {
 
         switch (character) {
         case 13:
-            buffer[position] = '\0';
+            buffer[length] = '\0';
             sout("\r\n");
-            if (position > 0) {
+            if (length > 0) {
                 strcpy(history[count % 10], buffer);
                 count++;
                 execute(buffer);
             }
             sout("%s", prompt);
-            position = 0;
+            length = 0;
+            cursor = 0;
+            historyPosition = -1;
             break;
 
         case 127:
-            if (position > 0) {
-                position--;
-                sout("\b \b");
+            if (cursor > 0) {
+                for (int i = cursor - 1; i < length - 1; i++) {
+                    buffer[i] = buffer[i + 1];
+                }
+                cursor--;
+                length--;
+                buffer[length] = '\0';
+        
+                sout("\r\033[K%s%s", prompt, buffer);
+                for (int i = 0; i < (length - cursor); i++) {
+                    sout("\033[D");
+                }
             }
             break;
 
         case 27:
-            arrows(buffer, &position, prompt, &count, &historyPosition, history);
+            arrows(buffer, &cursor, &length, prompt, &count, &historyPosition, history);
             break;
         
         case 4:
@@ -81,9 +96,20 @@ int main() {
             break;
 
         default:
-            if (position < 1023) {
-                buffer[position++] = character;
-                sout("%c", character);
+            if (length < 1023) {
+                for (int i = length; i > cursor; i--) {
+                    buffer[i] = buffer[i - 1];
+                }
+                
+                buffer[cursor] = character;
+                cursor++;
+                length++;
+                buffer[length] = '\0';
+        
+                sout("\r\033[K%s%s", prompt, buffer);
+                for (int i = 0; i < (length - cursor); i++) {
+                    sout("\033[D");
+                }
             }
             break;
         }
@@ -140,7 +166,7 @@ void execute(char *buffer) {
 
         execvp(argv[0], argv);
         if (errno == ENOENT) {
-            sout("\r\nfash: %s: command not found\r\n", argv[0]);
+            sout("\rfash: %s: command not found\r\n", argv[0]);
         }
         exit(1);
     } else if (pid > 0) {
@@ -151,35 +177,45 @@ void execute(char *buffer) {
 
 
 
-void arrows(char *inputBuffer, int *inputLength, char *prompt, int *totalHistoryCount, int *historyIndex, char historyList[10][1024]) {
+void arrows(char *inputBuffer, int *cursor, int *inputLength, char *prompt, int *total, int *historyIndex, char historyList[10][1024]) {
     char seq[2];
     if (read(STDIN_FILENO, &seq[0], 1) <= 0 || read(STDIN_FILENO, &seq[1], 1) <= 0) return;
     if (seq[0] != '[') return;
 
-    // Up Arrow (A)
     if (seq[1] == 'A') {
-        if (*historyIndex < *totalHistoryCount - 1 && *historyIndex < 9) {
+        if (*historyIndex < *total - 1 && *historyIndex < 9) {
             (*historyIndex)++;
-        }
-    } 
-    // Down Arrow (B)
-    else if (seq[1] == 'B') {
+        } else return;
+    } else if (seq[1] == 'B') {
         if (*historyIndex >= 0) {
             (*historyIndex)--;
+        } else return;
+    } else if (seq[1] == 'C') {
+        if (*cursor < *inputLength) {
+            (*cursor)++;
+            sout("\033[C");
         }
+        return;
+    } else if (seq[1] == 'D') {
+        if (*cursor > 0) {
+            (*cursor)--;
+            sout("\033[D");
+        }
+        return;
     } else return;
 
     sout("\r\033[K%s", prompt);
 
     if (*historyIndex >= 0) {
-        int target = (*totalHistoryCount - 1 - *historyIndex) % 10;
-        if (target < 0) target += 10; 
-
+        int target = (*total - 1 - *historyIndex) % 10;
+        if (target < 0) target += 10;
         strcpy(inputBuffer, historyList[target]);
         *inputLength = strlen(inputBuffer);
+        *cursor = *inputLength;
         sout("%s", inputBuffer);
     } else {
         *inputLength = 0;
+        *cursor = 0;
         inputBuffer[0] = '\0';
     }
 }
