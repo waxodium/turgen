@@ -1,5 +1,5 @@
-# fcsh (Fast C-shell)
-A friendly and fast C-shell made for Unix/Linux platform.
+# fash (Fast Again Shell)
+A fast and furious C-shell made for Unix/Linux platform. An alternative to bash.
 
 > [!NOTE]
 > Experimental & in early concept development.
@@ -9,8 +9,8 @@ A friendly and fast C-shell made for Unix/Linux platform.
 ### Build fcsh
 1. Clone the fcsh repository: ``github.com/waxodium/fcsh``
 ```bash
-git clone https://github.com/waxodium/fcsh.git
-cd fcsh
+git clone https://github.com/waxodium/fash.git
+cd fash
 ```
 2. Once in fcsh. Use ``make build`` to construct binary
 ```bash
@@ -22,20 +22,20 @@ Other Makefile target rules:
 * ``make clean``: clean up.
 
 ### Install fcsh
-Manually move fcsh to the `/usr/bin` directory
+Manually move fash to the `/usr/bin` directory
 ```
-sudo mv fcsh /usr/bin/
+sudo mv fash /usr/bin/
 ```
 
 ### Run
 After installing:
 ```
-fcsh
+fash
 ```
 
 or if you chose not to install, just run the built binary named fcsh
 ```
-./fcsh
+./fash
 ```
 
 
@@ -54,3 +54,4 @@ Undocumented
 
 [fcsh]: https://github.com/waxodium/fcsh
 [MIT]: https://github.com/waxodium/fcsh/blob/main/LICENSE
+
