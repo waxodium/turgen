@@ -9,22 +9,47 @@ int WidthTerminal() {
     return w.ws_col;
 }
 
+void append(char *frame, int *pos, const char *str) {
+    while (*str != '\0' && *pos < 4095) {
+        frame[(*pos)++] = *str++;
+    }
+}
+
+void appendInt(char *frame, int *pos, int num) {
+    char buf[12];
+    int i = 0;
+    if (num == 0) {
+        frame[(*pos)++] = '0';
+        return;
+    }
+    while (num > 0) {
+        buf[i++] = (num % 10) + '0';
+        num /= 10;
+    }
+    while (i > 0) {
+        if (*pos < 4095) frame[(*pos)++] = buf[--i];
+    }
+}
+
 void redraw(char *prompt, char *buffer, int cursor, int oldCursor) {
     int terminalWidth = WidthTerminal();
     if (terminalWidth <= 0) terminalWidth = 80;
 
-    sout("\033[?25l");
+    char frame[4096];
+    int framePos = 0;
+
+    append(frame, &framePos, "\033[?25l");
 
     int startPosition = strlen(prompt) + oldCursor;
     int startRow = startPosition / terminalWidth;
-    
-    for (int i = 0; i < startRow; i++) {
-        sout("\033[A");
-    }
-    
-    sout("\r\033[J"); 
 
-    sout("%s%s", prompt, buffer);
+    for (int i = 0; i < startRow; i++) {
+        append(frame, &framePos, "\033[A");
+    }
+
+    append(frame, &framePos, "\r\033[J");
+    append(frame, &framePos, prompt);
+    append(frame, &framePos, buffer);
 
     int fullLength = strlen(prompt) + strlen(buffer);
     int currentPosition = strlen(prompt) + cursor;
@@ -34,13 +59,17 @@ void redraw(char *prompt, char *buffer, int cursor, int oldCursor) {
     int cursorColumn = currentPosition % terminalWidth;
 
     for (int i = 0; i < (totalRow - cursorRow); i++) {
-        sout("\033[A");
+        append(frame, &framePos, "\033[A");
     }
 
-    sout("\r");
+    append(frame, &framePos, "\r");
     if (cursorColumn > 0) {
-        sout("\033[%dC", cursorColumn);
+        append(frame, &framePos, "\033[");
+        appendInt(frame, &framePos, cursorColumn);
+        append(frame, &framePos, "C");
     }
 
-    sout("\033[?25h");
+    append(frame, &framePos, "\033[?25h");
+
+    write_chunk(frame, framePos);
 }

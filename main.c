@@ -217,8 +217,6 @@ void arrows(char *inputBuffer, int *cursor, int *inputLength, char *prompt, int 
         return;
     } else return;
     
-    sout("\r\033[K%s", prompt);
-
     int old_cursor = *cursor; 
     if (*historyIndex >= 0) {
         int target = (*total - 1 - *historyIndex) % 10;
