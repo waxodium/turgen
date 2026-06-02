@@ -1,14 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <termios.h>
 #include <unistd.h>
+
+#include <termios.h>
 #include <sys/wait.h>
+#include <sys/ioctl.h>
 
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
 
 #include "lib/sout.h"
+#include "lib/redraw.h"
 
 void enableRaw(struct termios *orgTerminal);
 void disableRaw(struct termios *orgTerminal);
@@ -16,6 +19,7 @@ void execute(char *buffer);
 void arrows(char *inputBuffer, int *cursor, int *inputLength, char *prompt, int *total, int *historyIndex, char historyList[10][1024]);
 
 struct termios cookedTerminal;
+
 
 int main() {
     char buffer[1024];
@@ -71,21 +75,17 @@ int main() {
 
         case 127:
             if (cursor > 0) {
+                int oldCursor = cursor;
                 for (int i = cursor - 1; i < length - 1; i++) {
                     buffer[i] = buffer[i + 1];
                 }
                 cursor--;
                 length--;
                 buffer[length] = '\0';
-        
-                sout("\033[?25l");
-                sout("\r\033[K%s%s", prompt, buffer);
-                for (int i = 0; i < (length - cursor); i++) {
-                    sout("\033[D");
-                }
-                sout("\033[?25h");
+
+                redraw(prompt, buffer, cursor, oldCursor);
             }
-            break;
+            break; 
 
         case 27:
             arrows(buffer, &cursor, &length, prompt, &count, &historyPosition, history);
@@ -99,30 +99,25 @@ int main() {
 
         default:
             if (length < 1023) {
+                int oldCursor = cursor;
                 if (cursor == length) {
                     buffer[cursor] = character;
                     cursor++;
                     length++;
-                    buffer[length] = '\0';
-                    sout("%c", character);
+                    buffer[length + 1] = '\0';
                 } else {
                     for (int i = length; i > cursor; i--) {
                         buffer[i] = buffer[i - 1];
                     }
-                    
                     buffer[cursor] = character;
                     cursor++;
                     length++;
-                    buffer[length] = '\0';
-            
-                    sout("\033[?25l");
-                    sout("\r\033[K%s%s", prompt, buffer);
-                    for (int i = 0; i < (length - cursor); i++)
-                        sout("\033[D");
-                    
-                    sout("\033[?25h");
+                    buffer[length + 1] = '\0';
                 }
+                
+                redraw(prompt, buffer, cursor, oldCursor);        
             }
+            
             break;
         }
     }
@@ -201,39 +196,41 @@ void arrows(char *inputBuffer, int *cursor, int *inputLength, char *prompt, int 
     if (seq[0] != '[') return;
 
     if (seq[1] == 'A') {
-        if (*historyIndex < *total - 1 && *historyIndex < 9) {
-            (*historyIndex)++;
-        } else return;
+        if (*historyIndex < *total - 1 && *historyIndex < 9) (*historyIndex)++;
+        else return;
     } else if (seq[1] == 'B') {
-        if (*historyIndex >= 0) {
-            (*historyIndex)--;
-        } else return;
+        if (*historyIndex >= 0) (*historyIndex)--;
+        else return;
     } else if (seq[1] == 'C') {
         if (*cursor < *inputLength) {
+            int old_cursor = *cursor;
             (*cursor)++;
-            sout("\033[C");
+            redraw(prompt, inputBuffer, *cursor, old_cursor);
         }
         return;
     } else if (seq[1] == 'D') {
         if (*cursor > 0) {
+            int old_cursor = *cursor;
             (*cursor)--;
-            sout("\033[D");
+            redraw(prompt, inputBuffer, *cursor, old_cursor);
         }
         return;
     } else return;
-
+    
     sout("\r\033[K%s", prompt);
 
+    int old_cursor = *cursor; 
     if (*historyIndex >= 0) {
         int target = (*total - 1 - *historyIndex) % 10;
         if (target < 0) target += 10;
         strcpy(inputBuffer, historyList[target]);
         *inputLength = strlen(inputBuffer);
         *cursor = *inputLength;
-        sout("%s", inputBuffer);
     } else {
         *inputLength = 0;
         *cursor = 0;
         inputBuffer[0] = '\0';
     }
+
+    redraw(prompt, inputBuffer, *cursor, old_cursor);
 }
