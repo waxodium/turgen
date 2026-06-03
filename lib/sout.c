@@ -46,7 +46,6 @@ void sout(const char *format, ...) {
     va_start(arguments, format);
 
     for (const char *cursor = format; *cursor != '\0'; cursor++) {
-        // Flush if buffer is full before adding new character
         if (pos >= 1023) {
             write_chunk(buffer, pos);
             pos = 0;
