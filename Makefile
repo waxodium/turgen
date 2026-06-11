@@ -1,19 +1,20 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -Iinclude -Ilib -Imodule -Icommand
 
-SRC = main.c lib/*.c module/*.c command/*.c
-TARGET = fash
+SRC    = main.c $(wildcard lib/*.c) $(wildcard module/*.c) $(wildcard command/*.c)
+BUILD = ./build
+TARGET = $(BUILD)/fash
 
 all: $(TARGET)
 
-$(TARGET):
+$(TARGET): $(SRC)
+	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
 
 run: $(TARGET)
-	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
-	./$(TARGET)
+	$(TARGET)
 
 clean:
-	rm -f $(TARGET)
+	rm -r $(BUILD)
 
 .PHONY: all run clean
