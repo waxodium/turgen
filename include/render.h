@@ -13,4 +13,7 @@ void render_init(ShellState *state, const char *prompt);
 void render_update(ShellState *state, int old_cursor);
 int width();
 
+void append_str(char *frame, int *pos, const char *str);
+void append_int(char *frame, int *pos, int num);
+
 #endif

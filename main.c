@@ -9,6 +9,7 @@
 #include "render.h"
 #include "terminal.h"
 #include "prompter.h"
+#include "tree.h"
 
 
 void execute(char *buffer);
@@ -155,6 +156,14 @@ int main() {
             disableRaw(&Terminal);
             exit(0);
             break;
+        
+        // TAB key
+        case 9:
+            if (strchr(state.buffer, '*')) {
+                TabTree(&state);
+                continue;
+            }
+        break;
 
         default:
             if (state.length < 4095 && character >= 32 && character <= 126) {

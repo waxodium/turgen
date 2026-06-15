@@ -1,3 +1,4 @@
+#include <glob.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,21 +6,25 @@
 #include <unistd.h>
 
 #include "sout.h"
+#include "tree.h"
+#include "render.h"
 #include "terminal.h"
 #include "navigation.h"
 
 #define MaxDir 10
 #define PathMax 4096
 
-int fclear(char **argv) {
+int fclear(char **argv, ShellState *state) {
     (void) **argv;
+    (void) *state;
     write(STDOUT_FILENO, "\033c", 2);
     sout("\033[H\033[J");
     return 0;
 }
 
-int fexit(char **argv) {
+int fexit(char **argv, ShellState *state) {
     (void) **argv;
+    (void) *state;
     sout("exit\r\n");
     disableRaw(&Terminal); 
     exit(0);
@@ -62,53 +67,73 @@ int directory(const char *InputPath) {
     return S_ISDIR(statbuf.st_mode);
 }
 
-int cd(char **argv) {
-    char *targetDir = argv[1];
-    char pathBuffer[4096];
-    char currentDirBuffer[4096];
-    char *homeDir = getenv("HOME");
-    char *oldPwd = getenv("OLDPWD");
+int cd(char **argv, ShellState *state) {
+    char *target = argv[1];
+    char path[4096];
+    char current[4096];
+    char newdir[4096];
+    char *home = getenv("HOME");
+    char *old = getenv("OLDPWD");
 
-    if (getcwd(currentDirBuffer, sizeof(currentDirBuffer)) == NULL) {
+    if (getcwd(current, sizeof(current)) == NULL) {
         sout("\rfash: cd: cannot determine current directory\r\n");
         return 1;
     }
 
-    if (targetDir == NULL || strcmp(targetDir, "~") == 0) {
-        if (!homeDir) {
+    if (!target || strcmp(target, "~") == 0) {
+        if (!home) {
             sout("\rfash: cd: HOME not set\r\n");
             return 1;
         }
-        targetDir = homeDir;
-    } else if (strncmp(targetDir, "~/", 2) == 0) {
-        if (!homeDir) {
+        target = home;
+    }
+
+    if (target && strncmp(target, "~/", 2) == 0) {
+        if (!home) {
             sout("\rfash: cd: HOME not set\r\n");
             return 1;
         }
-        snprintf(pathBuffer, sizeof(pathBuffer), "%s%s", homeDir, targetDir + 1);
-        targetDir = pathBuffer;
-    } else if (strcmp(targetDir, "-") == 0) {
-        if (!oldPwd) {
+        snprintf(path, sizeof(path), "%s%s", home, target + 1);
+        target = path;
+    }
+
+    if (target && strcmp(target, "-") == 0) {
+        if (!old) {
             sout("\rfash: cd: OLDPWD not set\r\n");
             return 1;
         }
-        sout("%s\r\n", oldPwd);
-        targetDir = oldPwd;
+        sout("%s\r\n", old);
+        target = old;
     }
 
-    if (chdir(targetDir) != 0) {
+    glob_t match;
+    bool hasglob = (target && (strchr(target, '*') || strchr(target, '?')));
+    bool globbed = (hasglob && glob(target, 0, NULL, &match) == 0);
+
+    if (globbed && match.gl_pathc > 1) {
+        sout("\rfash: Ambiguous match. Launching directory selector...\r\n");
+        globfree(&match);
+        
+        TabTree(state); 
+        return 1;
+    }
+
+    if (globbed && match.gl_pathc == 1) {
+        snprintf(path, sizeof(path), "%s", match.gl_pathv[0]);
+        target = path;
+        globfree(&match);
+    }
+
+    if (chdir(target) != 0) {
         sout("\rfash: cd: %s: No such file or directory\r\n", argv[1]);
         return 1;
     }
 
-    char newDirBuffer[4096];
-    if (getcwd(newDirBuffer, sizeof(newDirBuffer)) != NULL) {
-        setenv("OLDPWD", currentDirBuffer, 1);
-        setenv("PWD", newDirBuffer, 1);
-        
-        pushDirHistory(newDirBuffer);
+    if (getcwd(newdir, sizeof(newdir)) != NULL) {
+        setenv("OLDPWD", current, 1);
+        setenv("PWD", newdir, 1);
+        pushDirHistory(newdir);
     }
 
     return 1;
 }
-

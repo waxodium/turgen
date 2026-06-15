@@ -9,70 +9,69 @@
 #include "sout.h"
 #include "terminal.h"
 
-
-typedef int (*functionCMD)(char **argv);
+typedef int (*Handler)(char **, ShellState *);
 
 typedef struct {
     const char *name;
-    functionCMD func;
-} StandardCMD;
+    Handler func;
+} Command;
 
-
-static StandardCMD CMDlist[] = {
+static Command builtins[] = {
     {"clear", fclear},
     {"cls",   fclear},
     {"exit",  fexit}, 
-    {"cd", cd}
+    {"cd",    cd}
 };
 
-
-int listCMD(void) {
-    return sizeof(CMDlist) / sizeof(StandardCMD);
+int total(void) {
+    return sizeof(builtins) / sizeof(Command);
 }
 
-
-void execute(char *buffer) {
-    char cmd[4096];
-    strncpy(cmd, buffer, sizeof(cmd) - 1);
-    cmd[sizeof(cmd) - 1] = '\0';
+void execute(char *buffer, ShellState *state) {
+    char copy[4096];
+    strncpy(copy, buffer, sizeof(copy) - 1);
+    copy[sizeof(copy) - 1] = '\0';
 
     char *argv[1024];
-    int b = 0;
-    char *token = strtok(cmd, " ");
+    int count = 0;
+    char *token = strtok(copy, " ");
     
-    while (token != NULL && b < 1023) {
-        argv[b++] = token;
+    while (token && count < 1023) {
+        argv[count] = token;
+        count++;
         token = strtok(NULL, " ");
     }
-    argv[b] = NULL;
+    argv[count] = NULL;
 
-    if (argv[0] == NULL) return;
+    if (!argv[0]) return;
 
-    
-
-    for (int i = 0; i < listCMD(); i++) {
-        if (strcmp(argv[0], CMDlist[i].name) == 0) {
-            CMDlist[i].func(argv); 
+    for (int i = 0; i < total(); i++) {
+        if (strcmp(argv[0], builtins[i].name) == 0) {
+            builtins[i].func(argv, state); 
             return;
         }
     }
 
+    bool path = (argv[0][0] == '/' || argv[0][0] == '~' || strchr(argv[0], '/') || strcmp(argv[0], ".") == 0 || strcmp(argv[0], "..") == 0);
+    bool glob = (strchr(argv[0], '*') || strchr(argv[0], '?'));
+    bool dir = directory(argv[0]);
 
-    // cd parser
-    if (argv[0] != NULL && (argv[0][0] == '/' || argv[0][0] == '.' || argv[0][0] == '~')) {
-        if (directory(argv[0])) {
-            char *cd_argv[] = {"cd", argv[0], NULL};
-            cd(cd_argv);
-            return;
-        }
-    }   
+    if (path && dir) {
+        char *args[] = { "cd", argv[0], NULL};
+        cd(args, state);
+        return;
+    }
 
+    if (glob) {
+        char *args[] = { "cd", argv[0], NULL };
+        cd(args, state);
+        return;
+    }
 
-        
     disableRaw(&Terminal);
 
-    
     pid_t pid = fork();
+    
     if (pid == 0) {
         struct sigaction sa;
         sa.sa_handler = SIG_DFL;
@@ -81,14 +80,16 @@ void execute(char *buffer) {
         sigaction(SIGINT, &sa, NULL);
 
         execvp(argv[0], argv);
-        if (errno == ENOENT) 
+        
+        if (errno == ENOENT) {
             sout("\rfash: %s: command not found\r\n", argv[0]);
+        }
         exit(1);
+    }
 
-    } else if (pid > 0) {
+    if (pid > 0) {
         wait(NULL);
     }
     
     enableRaw(&Terminal);
 }
-
