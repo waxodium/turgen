@@ -14,12 +14,6 @@
 
 
 
-
-// Command History
-char history[100][4096];
-int historyCount = 0;
-int historyView = 0;
-
 struct termios Terminal;
 
 
