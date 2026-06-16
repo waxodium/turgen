@@ -1,5 +1,5 @@
-# fash (Fast Again Shell)
-Fash is a fast paced C-shell that belongs to Bourne family, made for Unix/Linux platform
+# Turgen Shell
+Turgen Shell is a C-Shell made for fast-paced and convenient usage, for Unix/Linux platform
 
 > [!NOTE]
 > Still working on it..
@@ -9,13 +9,13 @@ Fash is a fast paced C-shell that belongs to Bourne family, made for Unix/Linux 
 
 ## Build & Install
 
-### Build fash
-1. Clone the fash repository: ``github.com/waxodium/fash``
+### Build Turgen
+1. Clone the turgen repository: ``github.com/waxodium/turgen``
 ```bash
-git clone https://github.com/waxodium/fash.git
-cd fash
+git clone https://github.com/waxodium/turgen.git
+cd turgen
 ```
-2. Once in fash. Use ``make build`` to construct binary
+2. Once in turgen. Use ``make build`` to construct binary
 ```bash
 make build
 ```
@@ -24,25 +24,25 @@ Other Makefile target rules:
 * ``make run`` : compile then run.
 * ``make clean``: clean up.
 
-### Install fash
-Manually move fash to the `/usr/bin` directory
+### Install turgen
+Manually move turgen to the `/usr/bin` directory
 ```
-sudo mv build/fash /usr/bin/
+sudo mv build/turgen /usr/bin/
 ```
 
 ### Run
 After installing:
 ```
-fash
+turgen
 ```
 
-or if you chose not to install, just run the built binary named fash
+or if you chose not to install, just run the built binary named turgen
 ```
-./fash
+./turgen
 ```
 
 ## Availability
-Fash doesn't have repository on any package manager registry. The only source is on this repository you're reading, RIGHT NOW.
+Turgen doesn't have repository on any package manager registry. The only source is on this repository you're reading, RIGHT NOW.
 
 ## Releases
 None
@@ -54,9 +54,9 @@ Undocumented
 Undocumented
 
 ## License
-[fash] is [MIT] Licensed
+[turgen] is [MIT] Licensed
 
 
-[fash]: https://github.com/waxodium/fash
+[turgen]: https://github.com/waxodium/fash
 [MIT]: https://github.com/waxodium/fcsh/blob/main/LICENSE
 
