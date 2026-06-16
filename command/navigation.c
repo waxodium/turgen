@@ -9,7 +9,7 @@
 #define MaxDir 10
 #define PathMax 4096
 
-int fclear(char **argv, ShellState *state) {
+int tclear(char **argv, ShellState *state) {
     (void) **argv;
     (void) *state;
     write(STDOUT_FILENO, "\033c", 2);
@@ -17,7 +17,7 @@ int fclear(char **argv, ShellState *state) {
     return 0;
 }
 
-int fexit(char **argv, ShellState *state) {
+int texit(char **argv, ShellState *state) {
     (void) **argv;
     (void) *state;
     sout("exit\r\n");
@@ -62,6 +62,11 @@ int directory(const char *InputPath) {
     return S_ISDIR(statbuf.st_mode);
 }
 
+bool is_navigatable_path(const char *token) {
+    if (token == NULL) return false;
+    return (directory(token) || token[0] == '/' || token[0] == '~' || token[0] == '.' || strcmp(token, "..") == 0);
+}
+
 int cd(char **argv, ShellState *state) {
     char *target = argv[1];
     char path[4096];
@@ -81,18 +86,19 @@ int cd(char **argv, ShellState *state) {
             return 1;
         }
         target = home;
-    }
-
-    if (target && strncmp(target, "~/", 2) == 0) {
+    } 
+    else if (strcmp(target, "..") == 0) {
+        target = "..";
+    } 
+    else if (strncmp(target, "~/", 2) == 0) {
         if (!home) {
             sout("\r%s: cd: HOME not set\r\n", shellname);
             return 1;
         }
         snprintf(path, sizeof(path), "%s%s", home, target + 1);
         target = path;
-    }
-
-    if (target && strcmp(target, "-") == 0) {
+    } 
+    else if (strcmp(target, "-") == 0) {
         if (!old) {
             sout("\r%s: cd: OLDPWD not set\r\n", shellname);
             return 1;
@@ -101,13 +107,14 @@ int cd(char **argv, ShellState *state) {
         target = old;
     }
 
+    
+
     glob_t match;
     bool hasglob = (target && (strchr(target, '*') || strchr(target, '?')));
     bool globbed = (hasglob && glob(target, 0, NULL, &match) == 0);
 
     if (globbed && match.gl_pathc > 1) {
         globfree(&match);
-        
         TabTree(state); 
         return 1;
     }
@@ -119,7 +126,13 @@ int cd(char **argv, ShellState *state) {
     }
 
     if (chdir(target) != 0) {
-        sout("\r%s: cd: %s: No such file or directory\r\n", shellname, argv[1]);
+        if (errno == EACCES) {
+            sout("\r%s: cd: %s: Permission denied\r\n", shellname, target);
+        } else if (errno == ENOENT) {
+            sout("\r%s: cd: %s: No such file or directory\r\n", shellname, target);
+        } else {
+            sout("\r%s: cd: %s: Error changing directory\r\n", shellname, target);
+        }
         return 1;
     }
 
@@ -129,5 +142,5 @@ int cd(char **argv, ShellState *state) {
         pushDirHistory(newdir);
     }
 
-    return 1;
+    return 0;
 }

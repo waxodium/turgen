@@ -106,126 +106,110 @@ void DrawUI(char *Frame, int *position, int selected, int start, int border) {
     }
 }
 
-
 void TabTree(ShellState *state) {
+    char *space = strrchr(state->buffer, ' ');
+    char *prefix = (space != NULL) ? space + 1 : state->buffer;
+    int prefixLength = (int)(prefix - state->buffer);
+
     count = 0;
     memset(listDir, 0, sizeof(listDir));
     bool root[DEPTH] = {false};
     char target[1024];
-    char *input = state->buffer;
 
-    bool changedDir = (strncmp(input, "cd ", 3) == 0);
-    if (changedDir) {
-        input += 3;
-    }
-
-    if (input[0] == '~') {
+    if (prefix[0] == '~') {
         const char *home = getenv("HOME");
-        if (!home) {
-            home = ".";
-        }
-        snprintf(target, sizeof(target), "%s%s", home, input + 1);
-    }
-    if (strlen(input) == 0) {
+        snprintf(target, sizeof(target), "%s%s", home ? home : ".", prefix + 1);
+    } else if (strlen(prefix) == 0) {
         strcpy(target, ".");
-    }
-    if (strlen(input) > 0 && input[0] != '~') {
-        strncpy(target, input, sizeof(target) - 1);
+    } else {
+        strncpy(target, prefix, sizeof(target) - 1);
         target[sizeof(target) - 1] = '\0';
     }
 
-    struct stat status;
-    bool dirs = (stat(target, &status) == 0 && S_ISDIR(status.st_mode));
-    char *slash = strrchr(target, '/');
+    if (strcmp(target, "") == 0) strcpy(target, ".");
 
-    if (!dirs && slash) {
-        *slash = '\0';
+    struct stat status;
+    bool isDir = (stat(target, &status) == 0 && S_ISDIR(status.st_mode));
+
+    
+
+    if (!isDir && strcmp(target, "/") != 0) {
+        char *slash = strrchr(target, '/');
+        if (!slash) {
+            strcpy(target, ".");
+        } else if (slash == target) {
+            strcpy(target, "/");
+        } else {
+            *slash = '\0';
+        }
     }
-    if (!dirs && !slash) {
-        strcpy(target, ".");
-    }
+
+    
 
     ScanDirectories(target, 0, root);
     if (count == 0) return;
 
+    
     int selected = 0;
     int start = 0;
-    
     struct termios orig, raw;
     tcgetattr(STDIN_FILENO, &orig);
     raw = orig;
     raw.c_lflag &= ~(ECHO | ICANON);
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
-    
+
     write(STDOUT_FILENO, "\n", 1);
     write(STDOUT_FILENO, "\033[?25l", 6);
 
     while (1) {
-        if (selected < start) {
-            start = selected;
-        }
-        if (selected >= start + viewport) {
-            start = selected - viewport + 1;
-        }
-        
-        int border = start + viewport;
-        if (border > count) {
-            border = count;
-        }
+        if (selected < start) start = selected;
+        if (selected >= start + viewport) start = selected - viewport + 1;
+        int border = (start + viewport > count) ? count : start + viewport;
         int lines = border - start;
+
+        
 
         char frame[8192] = {0};
         int position = 0;
-        
         append_str(frame, &position, "\r");
         DrawUI(frame, &position, selected, start, border);
+
         
+
         char up[16];
         snprintf(up, sizeof(up), "\033[%dA", lines);
         append_str(frame, &position, up);
-        
         write(STDOUT_FILENO, frame, position);
 
+        
         char key;
-        if (read(STDIN_FILENO, &key, 1) <= 0) {
+        if (read(STDIN_FILENO, &key, 1) <= 0) 
             continue;
-        }
 
         if (key == 27) {
             struct pollfd pfd = {STDIN_FILENO, POLLIN, 0};
-            if (poll(&pfd, 1, 15) == 0) {
-                break;
-            }
-
+            if (poll(&pfd, 1, 15) == 0) break;
             char segment[3];
             read(STDIN_FILENO, &segment[0], 2);
-
-            if (segment[1] == 'A' && selected > 0) {
-                selected--;
-            }
-            if (segment[1] == 'B' && selected < count - 1) {
-                selected++;
-            }
+            if (segment[1] == 'A' && selected > 0) selected--;
+            if (segment[1] == 'B' && selected < count - 1) selected++;
             continue;
         }
 
         if (key == 13) {
-            if (changedDir) {
-                snprintf(state->buffer, 4095, "cd %s", listDir[selected].path);
-            }
-            if (!changedDir) {
-                snprintf(state->buffer, 4095, "%s", listDir[selected].path);
-            }
+            char cmdPrefix[1024];
+            strncpy(cmdPrefix, state->buffer, prefixLength);
+            cmdPrefix[prefixLength] = '\0';
+            snprintf(state->buffer, 4095, "%s%s", cmdPrefix, listDir[selected].path);
             state->length = strlen(state->buffer);
             state->cursor = state->length;
             break;
         }
 
-        if (key == 'q') {
+        if (key == 'q') 
             break;
-        }
     }
-    
+
     write(STDOUT_FILENO, "\r\033[J\033[1A\r\033[K", 13);
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig);
     write(STDOUT_FILENO, "\033[?25h", 6);

@@ -8,8 +8,8 @@
 
 extern struct termios Terminal;
 
-int fclear(char **argv, ShellState *state);
-int fexit(char **argv, ShellState *state);
+int tclear(char **argv, ShellState *state);
+int texit(char **argv, ShellState *state);
 int directory(const char *path);
 int cd(char **argv, ShellState *state);
 
