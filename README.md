@@ -57,6 +57,6 @@ Undocumented
 [turgen] is [MIT] Licensed
 
 
-[turgen]: https://github.com/waxodium/fash
+[turgen]: https://github.com/waxodium/turgen
 [MIT]: https://github.com/waxodium/fcsh/blob/main/LICENSE
 
