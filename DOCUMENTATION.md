@@ -1,4 +1,4 @@
-# Turgens Shell Documentation
+# Turgen Shell Documentation
 Welcomee to Turgen Shell documentations. Where this will show you the contributing rules and tour around the repository.
 
 
