@@ -2,7 +2,7 @@
 > waxodium will be happy to see anyone joins in to work with.
 
 Welcome! For new Turgen Shell Developers. 
-- **Explore the Code**: If you are new, start by reading the [./docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) to understand how the turgen shell source code works together.
+- **Explore the Code**: If you are new, start by reading the [DOCUMENTATION](./DOCUMENTATION.md) to understand how the turgen shell source code works together.
 
 - **Find an Issue**: Look through *Turgen Shell's* [Issue Tracker](https://github.com/waxodium/turgen/issues) for tasks labeled `good first issue` or `help wanted`.
 
@@ -15,7 +15,7 @@ There are **3** ways to contribute to the turgen repository.
 
 ### 1. Forks
 - Make a fork of [turgen repository](https://github.com/waxodium/turgen) to your own personal contributing github account.
-- Make changes to your forked repository. Be sure to read the [DOCUMENTATION](./DOCUMENTATION.md) and the [ARCHITECTURE](./docs/ARCHITECTURE.md) when making changes.
+- Make changes to your forked repository. Be sure to read the [DOCUMENTATION](./DOCUMENTATION.md) when making changes.
 - Contribute to turgen via submitting a Pull Request **(PR)** from your forked repository.
 
 ### 2. Reporting Issues or Discussion
@@ -49,4 +49,5 @@ make appropiate changes by also following the turgen's [DOCUMENTATION](./DOCUMEN
 If your changes involve significant changes to the codebase, please open an issue start a discussion first to reach out to the repository maintainer
 
 ---
+
 
