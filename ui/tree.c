@@ -4,7 +4,7 @@
 #include "paths.h"
 
 
-#define DEPTH 2
+#define DEPTH 3
 #define ENTRIES 512
 #define viewport 20
 

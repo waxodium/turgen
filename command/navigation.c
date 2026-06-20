@@ -62,10 +62,8 @@ int directory(const char *InputPath) {
     return S_ISDIR(statbuf.st_mode);
 }
 
-bool is_navigatable_path(const char *token) {
-    if (token == NULL) return false;
-    return (directory(token) || token[0] == '/' || token[0] == '~' || token[0] == '.' || strcmp(token, "..") == 0);
-}
+
+
 
 int cd(char **argv, ShellState *state) {
     char *target = argv[1];

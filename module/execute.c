@@ -1,23 +1,12 @@
 #include "turgen.h"
 
-#include "navigation.h"
 #include "sout.h"
 #include "terminal.h"
 #include "globs.h"
 
-typedef int (*Handler)(char **, ShellState *);
+#include "execute.h"
 
-typedef struct {
-    const char *name;
-    Handler func;
-} Command;
 
-static Command builtins[] = {
-    {"clear", tclear},
-    {"cls",   tclear},
-    {"exit",  texit}, 
-    {"cd",    cd}
-};
 
 int total(void) {
     return sizeof(builtins) / sizeof(Command);
