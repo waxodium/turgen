@@ -31,14 +31,6 @@ Before understanding how Turgen links together. Take a look at turgen's project 
 ## How to Code in turgen repository
 These are the *do's and don'ts* on turgen repository
 
-### No `malloc()`
-turgen uses **Static Memory Allocation** to avoid memory leaks and heap fragmentation. 
-Exept the initial `globs.c` file set up. For performance purposes
-
-If you need to add new buffers, please consider if they can be declared as static or sized using constant defines **(#define MAX_BUFFER_SIZE)** rather than dynamically allocating them at runtime.
-
-Strictly avoid dynamic memory allocation **(malloc/free)**.
-
 ### Prohibition of Ternary Operators
 The use of the ternary conditional operator `(? :)` is strictly prohibited within this codebase.
 

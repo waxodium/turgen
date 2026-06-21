@@ -16,37 +16,37 @@ int total(void) {
 }
 
 void execute(char *buffer, ShellState *state) {
-    char commandCopy[4096];
-    strncpy(commandCopy, buffer, sizeof(commandCopy) - 1);
-    commandCopy[sizeof(commandCopy) - 1] = '\0';
+    if (buffer == NULL || strlen(buffer) == 0) return;
 
-    char *argv[1024];
+    char copy[4096];
+    strncpy(copy, buffer, sizeof(copy) - 1);
+    copy[sizeof(copy) - 1] = '\0';
+
+    char **argv = tokenize(copy);
+    if (!argv) return;
+
     int argc = 0;
-    char *token = strtok(commandCopy, " ");
-
-    while (token && argc < 1023) {
-        argv[argc++] = token;
-        token = strtok(NULL, " ");
-    }
-    argv[argc] = NULL;
-
-    for (int i = 0; i < argc; i++) {
-        tokenize(argv[i]);
+    while (argv[argc] != NULL) {
+        argc++;
     }
 
-    if (argc == 0) return;
+    if (argc == 0) {
+        free(argv);
+        return;
+    }
 
     char *command = argv[0];
     bool pathTarget = (strchr(command, '/') != NULL) || 
-                  (command[0] == '~') || 
-                  (strlen(command) > 0 && command[strlen(command) - 1] == '/') || 
-                  (strcmp(command, "..") == 0);
+                      (command[0] == '~') || 
+                      (strlen(command) > 0 && command[strlen(command) - 1] == '/') || 
+                      (strcmp(command, "..") == 0);
 
     if (pathTarget) {
         char *cdArgv[] = {"cd", command, NULL};
         for (int i = 0; i < total(); i++) {
             if (strcmp(builtins[i].name, "cd") == 0) {
                 builtins[i].func(cdArgv, state);
+                free(argv);
                 return;
             }
         }
@@ -55,12 +55,12 @@ void execute(char *buffer, ShellState *state) {
     for (int i = 0; i < total(); i++) {
         if (strcmp(command, builtins[i].name) == 0) {
             builtins[i].func(argv, state);
+            free(argv);
             return;
         }
     }
 
-
-
+    
     char *finalArgv[1024];
     int finalArgc = 0;
 
@@ -71,7 +71,9 @@ void execute(char *buffer, ShellState *state) {
                 finalArgv[finalArgc++] = result.paths[j];
             }
         } else {
-            finalArgv[finalArgc++] = argv[i];
+            if (finalArgc < 1023) {
+                finalArgv[finalArgc++] = argv[i];
+            }
         }
     }
     finalArgv[finalArgc] = NULL;
@@ -80,6 +82,7 @@ void execute(char *buffer, ShellState *state) {
 
     pid_t pid = fork();
     if (pid < 0) {
+        free(argv); 
         enableRaw(&Terminal);
         return;
     }
@@ -101,4 +104,6 @@ void execute(char *buffer, ShellState *state) {
 
     wait(NULL);
     enableRaw(&Terminal);
+
+    free(argv);
 }

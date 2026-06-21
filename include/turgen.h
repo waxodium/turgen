@@ -1,5 +1,5 @@
-#ifndef FASH
-#define FASH
+#ifndef TURGEN
+#define TURGEN
 
 #define _GNU_SOURCE
 #include <stdbool.h>
