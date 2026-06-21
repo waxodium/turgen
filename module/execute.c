@@ -31,7 +31,7 @@ void execute(char *buffer, ShellState *state) {
     argv[argc] = NULL;
 
     for (int i = 0; i < argc; i++) {
-        strip(argv[i]);
+        tokenize(argv[i]);
     }
 
     if (argc == 0) return;

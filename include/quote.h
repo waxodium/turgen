@@ -1,6 +1,6 @@
 #ifndef QUOTE_H
 #define QUOTE_H
 
-void strip(char *string);
+char **tokenize(char *input);
 
 #endif

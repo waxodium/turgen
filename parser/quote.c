@@ -1,15 +1,117 @@
 #include "turgen.h"
+#include <stdlib.h>
+#include <stdbool.h>
 
-void strip(char *string) {
-    if (string == NULL || strlen(string) < 2) return;
+#define LIMIT 16
 
-    size_t length = strlen(string);
-    char first = string[0];
-    char last = string[length - 1];
 
-    if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) 
+/*
+ * Dynamic Memory mananagement is not prohibited for strings related functions
+ *
+ * Read prohibition section from the ../DOCUMENTATION.md file
+ */
+char **tokenize(char *input) {
+    if (!input) 
     {
-        memmove(string, string + 1, length - 2);
-        string[length - 2] = '\0';
+        return NULL;
     }
+
+    int limit = LIMIT;
+    char **args = malloc(limit * sizeof(char *));
+    if (!args) 
+        return NULL;
+
+    int count = 0;
+    char *reader = input;
+    char *writer = input;
+    
+    char quote = '\0';
+    bool escaped = false;
+    bool active = false;
+
+    while (*reader) {
+        if (count >= limit - 1) {
+            limit *= 2; 
+            
+            char **temp = realloc(args, limit * sizeof(char *));
+            if (!temp) {
+                free(args); 
+                return NULL; 
+            }
+            args = temp;
+        }
+
+        char c = *reader;
+
+        if (escaped) {
+            
+            if (!active) {
+                args[count++] = writer;
+                active = true;
+            }
+            
+            switch (c) {
+                case 'n': *writer++ = '\n'; 
+                    break;
+                case 't': *writer++ = '\t'; break;
+                case 'r': *writer++ = '\r'; break;
+                default:  *writer++ = c;    break; 
+            }
+            escaped = false;
+        } 
+        
+        else if (c == '\\' && quote != '\'') {
+            escaped = true;
+            
+            if (!active) {
+                args[count++] = writer;
+                active = true;
+            }
+        } 
+        
+        else if (quote) {
+            if (c == quote) {
+                quote = '\0'; 
+            } else {
+                *writer++ = c;        
+            }
+        } 
+        
+        else {
+            if (c == ' ' || c == '\t' || c == '\n') {
+                if (active) {
+                    *writer++ = '\0'; 
+                    active = false;
+                }
+            } 
+            
+            else if (c == '"' || c == '\'') {
+                quote = c;    
+                
+                if (!active) {
+                    args[count++] = writer;
+                    active = true;
+                }
+
+
+            } 
+            
+            else {
+                if (!active) {
+                    args[count++] = writer;
+                    active = true;
+                }
+                *writer++ = c;
+            }
+        }
+        reader++;
+    }
+
+    if (active) {
+        *writer = '\0';
+    }
+
+    args[count] = NULL; 
+
+    return args;
 }
