@@ -12,7 +12,6 @@ typedef struct {
 } Command;
 
 static Command builtins[] = {
-    {"clear", tclear},
     {"cls",   tclear},
     {"exit",  texit}, 
     {"cd",    cd},

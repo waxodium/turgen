@@ -158,22 +158,21 @@ void execute(char *buffer, ShellState *state) {
         return;
     }
 
+
     if (routing(argv, argc, state)) {
         free(argv);
         return;
     }
 
-    if(semicolon(argv, argc, state)) {
+    if (semicolon(argv, argc, state)) {
         free(argv);
         return;
     }
-
 
     if (internal(argv[0], argv, state)) {
         free(argv);
         return;
     }
-
 
     char *final[1024];
     expanding(argv, argc, final);

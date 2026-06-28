@@ -9,11 +9,30 @@
 #define MaxDir 10
 #define PathMax 4096
 
-int tclear(char **argv, ShellState *state) {
+
+// Rewritten with some memset
+/*
+    tclear() is just a function that properly clears the
+    terminal includes it's scrollback buffer.
+
+    But linux/utils clear command doesn't
+    It's a visual bug from linux/utils clear command
+
+    So,
+    [!NOTE] Do not remove.
+
+*/
+int 
+tclear(char **argv, ShellState *state) {
     (void) **argv;
-    (void) *state;
-    write(STDOUT_FILENO, "\033c", 2);
-    sout("\033[H\033[J");
+    memset(state->buffer, 0, sizeof(state->buffer));
+    state->length = 0;
+    state->cursor = 0;
+
+
+    write(STDOUT_FILENO, "\033[H\033[2J\033[3J", 11);
+    
+    tcdrain(STDOUT_FILENO);
     return 0;
 }
 

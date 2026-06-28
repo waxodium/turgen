@@ -21,7 +21,7 @@ void seperate(char **argv, int argc, ShellState *state) {
         args[count] = NULL;
         if (count == 0) continue;
 
-        // >> disable rawMode first
+        fflush(stdout);
         disableRaw(&Terminal);
 
         pid_t child = fork();
@@ -31,9 +31,10 @@ void seperate(char **argv, int argc, ShellState *state) {
             execvp(args[0], args);
             exit(1);
 
-        } else 
-        {
+        } else if (child > 0) {
             wait(NULL);
+            enableRaw(&Terminal);
+        } else {
             enableRaw(&Terminal);
         }
     
