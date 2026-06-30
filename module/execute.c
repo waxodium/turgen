@@ -10,7 +10,7 @@
 #include "paths.h"
 #include "seperator.h"
 
-static void external(char **final);
+static int external(char **final);
 
 int total(void) {
     return sizeof(builtins) / sizeof(Command);
@@ -41,13 +41,11 @@ static bool semicolon(char **argv, int argc, ShellState *state) {
 static bool internal(char *command, char **argv, ShellState *state) {
     struct stat info;
 
-    if (strcmp(command, "..") == 0 ||strchr(command, '/') != NULL) {
-        
+    if (strcmp(command, "..") == 0 || strchr(command, '/') != NULL) {
         if (stat(command, &info) == 0 && S_ISDIR(info.st_mode)) {
             char path[1024];
 
-            if (command[0] != '/' && command[0] != '.' && command[0] != '~')
-            {
+            if (command[0] != '/' && command[0] != '.' && command[0] != '~') {
                 joinPath(path, sizeof(path), ".", command);
             } else {
                 strncpy(path, command, sizeof(path) - 1);
@@ -62,7 +60,7 @@ static bool internal(char *command, char **argv, ShellState *state) {
 
             for (int i = 0; i < total(); i++) {
                 if (strcmp(builtins[i].name, "cd") == 0) {
-                    builtins[i].func(args, state);
+                    state->last_status = builtins[i].func(args, state);
                     return true;
                 }
             }
@@ -70,9 +68,8 @@ static bool internal(char *command, char **argv, ShellState *state) {
     }
 
     for (int i = 0; i < total(); i++) {
-        
         if (strcmp(command, builtins[i].name) == 0) {
-            builtins[i].func(argv, state);
+            state->last_status = builtins[i].func(argv, state);
             return true;
         }
     }
@@ -104,15 +101,17 @@ static int expanding(char **argv, int argc, char **final) {
 static int run_command(char **argv, int argc, ShellState *state) {
     if (argc == 0) return 0;
 
-    if (internal(argv[0], argv, state))
-        return 0;
+    if (internal(argv[0], argv, state)) {
+        return state->last_status;
+    }
 
     char *final[1024];
     expanding(argv, argc, final);
-    external(final);
+    state->last_status = external(final);
 
-    return 0;
+    return state->last_status;
 }
+
 
 
 static bool logical(char **argv, int argc, ShellState *state) {
@@ -147,8 +146,8 @@ static bool logical(char **argv, int argc, ShellState *state) {
             } else {
                 char *final[1024];
                 expanding(left, l, final);
-                external(final);
-                success = true;
+                state->last_status = external(final); // Save status
+                success = (state->last_status == 0);
             }
 
 
@@ -174,14 +173,14 @@ static bool logical(char **argv, int argc, ShellState *state) {
     return false;
 }
 
-static void external(char **final) {
+static int external(char **final) {
     disableRaw(&Terminal);
 
     pid_t pid = fork();
 
     if (pid < 0) {
         enableRaw(&Terminal);
-        return;
+        return 1;
     }
 
     if (pid == 0) {
@@ -196,14 +195,20 @@ static void external(char **final) {
 
         if (errno == ENOENT) {
             sout("\r%s: %s: command not found\r\n", shellname, final[0]);
+            exit(127);
         }
 
         exit(1);
     }
 
-    wait(NULL);
-
+    int status;
+    wait(&status);
     enableRaw(&Terminal);
+    
+    if (WIFEXITED(status)) {
+        return WEXITSTATUS(status);
+    }
+    return 1;
 }
 
 

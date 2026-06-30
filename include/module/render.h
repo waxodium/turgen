@@ -7,6 +7,7 @@ typedef struct {
     int cursor;
     char prompt[256];
     int term_width;
+    int last_status;
 } ShellState;
 
 void render_init(ShellState *state, const char *prompt);
