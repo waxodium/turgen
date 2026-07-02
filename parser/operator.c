@@ -24,7 +24,12 @@ char **tokenize(char *input) {
 
 
     char *reader = input;
-    char *writer = input;
+    // char *writer = input;
+    char *writer = malloc(strlen(input) * 2 + 1);
+    if (!writer) {
+        free(args);
+        return NULL;
+    }
 
     bool active = false;
     char quote = '\0';

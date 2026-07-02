@@ -5,17 +5,14 @@
 #include "sout.h"
 
 
-/*
-    redirect() is a function on handling actual redirection.
-    opsing parses and pads to NOT conflict with tokenizer()
-    which is the function from quote.c parsing
 
-*/
 
-void redirect(char **argv, int argc, ShellState *state) {
+
+int redirect(char **argv, int argc, ShellState *state) {
     (void) *state;
     int stream = 0; 
     int cursor = 0;
+    int final_status = 0;
 
     while (cursor < argc) {
         char *args[1024];
@@ -110,13 +107,19 @@ void redirect(char **argv, int argc, ShellState *state) {
 
         int links[2];
         if (piped) {
-            if (pipe(links) < 0) { perror("pipe"); return; }
+            if (pipe(links) < 0) { 
+                perror("pipe");
+                return 1;
+            }
         }
 
         disableRaw(&Terminal);
 
         pid_t child = fork();
-        if (child < 0) { perror("fork"); enableRaw(&Terminal); return; }
+        if (child < 0) { 
+            perror("fork"); enableRaw(&Terminal);
+            return 1;
+        }
 
         if (child != 0) {
             if (stream != 0) close(stream);
@@ -130,6 +133,9 @@ void redirect(char **argv, int argc, ShellState *state) {
 
             int status;
             waitpid(child, &status, 0);
+            if (WIFEXITED(status)) {
+                final_status = WEXITSTATUS(status);
+            }
             enableRaw(&Terminal);
             continue;
         }
@@ -194,4 +200,6 @@ void redirect(char **argv, int argc, ShellState *state) {
         }
         exit(1);
     }
+
+    return final_status;
 }

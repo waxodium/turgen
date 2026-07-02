@@ -2,8 +2,9 @@
 #include "terminal.h"
 #include "render.h"
 
+int run_command(char **argv, int argc, ShellState *state);
+
 void seperate(char **argv, int argc, ShellState *state) {
-    (void) *state;
     int cursor = 0;
 
     while (cursor < argc) {
@@ -21,23 +22,6 @@ void seperate(char **argv, int argc, ShellState *state) {
         args[count] = NULL;
         if (count == 0) continue;
 
-        fflush(stdout);
-        disableRaw(&Terminal);
-
-        pid_t child = fork();
-        
-        if (child == 0) {
-            
-            execvp(args[0], args);
-            exit(1);
-
-        } else if (child > 0) {
-            wait(NULL);
-            enableRaw(&Terminal);
-        } else {
-            enableRaw(&Terminal);
-        }
-    
+        run_command(args, count, state);
     }
-
 }

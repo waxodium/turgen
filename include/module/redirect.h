@@ -1,3 +1,3 @@
 #include "render.h"
 
-void redirect(char **argv, int argc, ShellState *state);
+int redirect(char **argv, int argc, ShellState *state);

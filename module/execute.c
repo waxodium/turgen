@@ -1,16 +1,21 @@
 #include "turgen.h"
 
-#include "sout.h"
-#include "terminal.h"
-#include "globs.h"
 #include "execute.h"
+#include "terminal.h"
+#include "sout.h"
 
+#include "globs.h"
 #include "operator.h"
 #include "redirect.h"
 #include "paths.h"
 #include "seperator.h"
 
 static int external(char **final);
+static bool routing(char **argv, int argc, ShellState *state);
+static bool semicolon(char **argv, int argc, ShellState *state);
+static bool internal(char *command, char **argv, ShellState *state);
+static int expanding(char **argv, int argc, char **final);
+static bool logical(char **argv, int argc, ShellState *state);
 
 int total(void) {
     return sizeof(builtins) / sizeof(Command);
@@ -18,12 +23,11 @@ int total(void) {
 
 static bool routing(char **argv, int argc, ShellState *state) {
     for (int i = 0; i < argc; i++) {
-        if (strcmp(argv[i], "|") == 0 ||strpbrk(argv[i], "<>") != NULL) {
-            redirect(argv, argc, state);
+        if (strcmp(argv[i], "|") == 0 || strpbrk(argv[i], "<>") != NULL) {
+            state->last_status = redirect(argv, argc, state);
             return true;
         }
     }
-
     return false;
 }
 
@@ -34,7 +38,6 @@ static bool semicolon(char **argv, int argc, ShellState *state) {
             return true;
         }
     }
-
     return false;
 }
 
@@ -77,7 +80,6 @@ static bool internal(char *command, char **argv, ShellState *state) {
     return false;
 }
 
-
 static int expanding(char **argv, int argc, char **final) {
     int count = 0;
 
@@ -94,11 +96,10 @@ static int expanding(char **argv, int argc, char **final) {
     }
 
     final[count] = NULL;
-
     return count;
 }
 
-static int run_command(char **argv, int argc, ShellState *state) {
+int run_command(char **argv, int argc, ShellState *state) {
     if (argc == 0) return 0;
 
     if (internal(argv[0], argv, state)) {
@@ -112,13 +113,9 @@ static int run_command(char **argv, int argc, ShellState *state) {
     return state->last_status;
 }
 
-
-
 static bool logical(char **argv, int argc, ShellState *state) {
     for (int i = 0; i < argc; i++) {
-        
-        if (strcmp(argv[i], "&&") == 0 || strcmp(argv[i], "||") == 0)
-        {
+        if (strcmp(argv[i], "&&") == 0 || strcmp(argv[i], "||") == 0) {
             char *left[1024];
             char *right[1024];
             int l = 0;
@@ -126,50 +123,33 @@ static bool logical(char **argv, int argc, ShellState *state) {
 
             for (int j = 0; j < i; j++)
                 left[l++] = argv[j];
-
             left[l] = NULL;
-
 
             for (int j = i + 1; j < argc; j++)
                 right[r++] = argv[j];
-
             right[r] = NULL;
 
-
-
-            /*
-             * left side
-             */
             bool success = false;
             if (internal(left[0], left, state)) {
-                success = true;
+                success = (state->last_status == 0);
             } else {
                 char *final[1024];
                 expanding(left, l, final);
-                state->last_status = external(final); // Save status
+                state->last_status = external(final);
                 success = (state->last_status == 0);
             }
 
-
-
-
-            if (strcmp(argv[i], "&&") == 0)
-            {
+            if (strcmp(argv[i], "&&") == 0) {
                 if (success)
                     run_command(right, r, state);
-            }
-            
-            else if (strcmp(argv[i], "||") == 0)
-            {
+            } else if (strcmp(argv[i], "||") == 0) {
                 if (!success)
                     run_command(right, r, state);
             }
 
-
             return true;
         }
     }
-
     return false;
 }
 
@@ -207,21 +187,20 @@ static int external(char **final) {
     
     if (WIFEXITED(status)) {
         return WEXITSTATUS(status);
+    } else if (WIFSIGNALED(status)) {
+        return 128 + WTERMSIG(status);
     }
     return 1;
 }
-
-
 
 void execute(char *buffer, ShellState *state) {
     if (!buffer || *buffer == '\0')
         return;
 
     char **argv = tokenize(buffer);
-
     if (!argv) return;
+    
     int argc = 0;
-
     while (argv[argc]) {
         argc++;
     }
@@ -231,29 +210,25 @@ void execute(char *buffer, ShellState *state) {
         return;
     }
 
-    if (routing(argv, argc, state)) {
+    if (semicolon(argv, argc, state)) {
+        free(argv[0]);
         free(argv);
         return;
     }
 
-    if (semicolon(argv, argc, state)) {
+    if (routing(argv, argc, state)) {
+        free(argv[0]);
         free(argv);
         return;
     }
 
     if (logical(argv, argc, state)) {
+        free(argv[0]);
         free(argv);
         return;
     }
 
-    if (internal(argv[0], argv, state)) {
-        free(argv);
-        return;
-    }
-
-    
-    char *final[1024];
-    expanding(argv, argc, final);
-    external(final);
+    run_command(argv, argc, state);
+    free(argv[0]);
     free(argv);
 }
