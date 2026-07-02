@@ -84,81 +84,93 @@ void input(ShellState *state, char character, char *prompt) {
             }
             break; 
 
-        // (Arrows, HOME, END)
+        // (Arrows, HOME, END, CTRL+Arrows)
         case 27: {
             char seq[2];
             if (read(STDIN_FILENO, &seq[0], 1) <= 0 || read(STDIN_FILENO, &seq[1], 1) <= 0) {
                 break;
             }
 
-            if (seq[0] == '[') {
-                // Up Arrow
-                if (seq[1] == 'A') {
-                    if (historyView > 0) {
-                        historyView--;
-                        strcpy(state->buffer, history[historyView]);
-                        state->length = strlen(state->buffer);
-                        state->cursor = state->length;
-                        renderAble = 1;
-                    }
-                } 
-                // Down Arrow
-                else if (seq[1] == 'B') {
-                    if (historyView < historyCount) {
-                        historyView++;
-                        if (historyView == historyCount) {
-                            state->buffer[0] = '\0';
-                            state->length = 0;
-                        } else {
-                            strcpy(state->buffer, history[historyView]);
-                            state->length = strlen(state->buffer);
-                        }
-                        state->cursor = state->length;
-                        renderAble = 1;
-                    }
+            // Regular Arrows
+            
+            // Up
+            if (seq[0] == '[' && seq[1] == 'A' && historyView > 0) {
+                historyView--;
+                strcpy(state->buffer, history[historyView]);
+                state->length = strlen(state->buffer);
+                state->cursor = state->length;
+                renderAble = 1;
+                break;
+            } 
+            
+            // Down
+            if (seq[0] == '[' && seq[1] == 'B' && historyView < historyCount) {
+                historyView++;
+                if (historyView == historyCount) {
+                    state->buffer[0] = '\0';
+                    state->length = 0;
+                } else {
+                    strcpy(state->buffer, history[historyView]);
+                    state->length = strlen(state->buffer);
                 }
-                // Right Arrow
-                else if (seq[1] == 'C') {
-                    if (state->cursor < state->length) {
-                        state->cursor++;
-                        renderAble = 1;
-                    }
-                } 
-                
-                // Left Arrow
-                else if (seq[1] == 'D') {
-                    if (state->cursor > 0) {
-                        state->cursor--;
-                        renderAble = 1;
-                    }
-                }
-                
-                // HOME Keys
-                else if (seq[1] == 'H' || seq[1] == '1') {
-                    if (seq[1] == '1') { char trash; read(STDIN_FILENO, &trash, 1); } 
-                    state->cursor = 0;
-                    renderAble = 1;
-                }
-                // End Keys
-                else if (seq[1] == 'F' || seq[1] == '4') {
-                    if (seq[1] == '4') { char trash; read(STDIN_FILENO, &trash, 1); } 
-                    state->cursor = state->length;
-                    renderAble = 1;
-                }
+                state->cursor = state->length;
+                renderAble = 1;
+                break;
+            }
+
+            // Right
+            if (seq[0] == '[' && seq[1] == 'C' && state->cursor < state->length) {
+                state->cursor++;
+                renderAble = 1;
+                break;
+            } 
+            
+            // Left
+            if (seq[0] == '[' && seq[1] == 'D' && state->cursor > 0) {
+                state->cursor--;
+                renderAble = 1;
+                break;
+            }
+
+            // 2. Home and End Keys
+            
+            // Home
+            if ((seq[0] == '[' && seq[1] == 'H') || (seq[0] == 'O' && seq[1] == 'H')) {
+                state->cursor = 0;
+                renderAble = 1;
+                break;
             }
             
-            else if (seq[0] == 'O') {
-                if (seq[1] == 'H') {         
-                    state->cursor = 0;
+            // End
+            if ((seq[0] == '[' && seq[1] == 'F') || (seq[0] == 'O' && seq[1] == 'F')) {
+                state->cursor = state->length;
+                renderAble = 1;
+                break;
+            }
+
+            // 3. CTRL + Arrows
+            if (seq[0] == '[' && seq[1] == '1') {
+                char semi, mod, dir;
+                if (read(STDIN_FILENO, &semi, 1) <= 0) break;
+                if (read(STDIN_FILENO, &mod, 1) <= 0) break;
+                if (read(STDIN_FILENO, &dir, 1) <= 0) break;
+
+                // CTRL RIGHT
+                if (semi == ';' && mod == '5' && dir == 'C') {
+                    while (state->cursor < state->length && state->buffer[state->cursor] == ' ') state->cursor++;
+                    while (state->cursor < state->length && state->buffer[state->cursor] != ' ') state->cursor++;
                     renderAble = 1;
-                } else if (seq[1] == 'F') {  
-                    state->cursor = state->length;
+                }
+                
+                // CTRL LEFT
+                if (semi == ';' && mod == '5' && dir == 'D') {
+                    while (state->cursor > 0 && state->buffer[state->cursor - 1] == ' ') state->cursor--;
+                    while (state->cursor > 0 && state->buffer[state->cursor - 1] != ' ') state->cursor--;
                     renderAble = 1;
                 }
             }
             break;
-        }
-        
+        }        
         // CTRL-D 
         case 4:
             sout("\r\nexit\r\n");
