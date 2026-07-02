@@ -23,6 +23,8 @@ int total(void) {
 
 static bool routing(char **argv, int argc, ShellState *state) {
     for (int i = 0; i < argc; i++) {
+        if (strchr(argv[i], '"') || strchr(argv[i], '\'')) continue;
+
         if (strcmp(argv[i], "|") == 0 || strpbrk(argv[i], "<>") != NULL) {
             state->last_status = redirect(argv, argc, state);
             return true;
@@ -33,6 +35,8 @@ static bool routing(char **argv, int argc, ShellState *state) {
 
 static bool semicolon(char **argv, int argc, ShellState *state) {
     for (int i = 0; i < argc; i++) {
+        if (strchr(argv[i], '"') || strchr(argv[i], '\'')) continue;
+
         if (strcmp(argv[i], ";") == 0) {
             seperate(argv, argc, state);
             return true;
@@ -101,6 +105,41 @@ static int expanding(char **argv, int argc, char **final) {
 
 int run_command(char **argv, int argc, ShellState *state) {
     if (argc == 0) return 0;
+    /*
+    for (int i = 0; i < argc; i++) {
+        char *src = argv[i], *dst = argv[i];
+        char q = '\0';
+        while (*src) {
+            if ((*src == '"' || *src == '\'') && (q == '\0' || q == *src)) {
+                q = (q == '\0') ? *src : '\0';
+                src++;
+            } else {
+                *dst++ = *src++;
+            }
+        }
+        *dst = '\0';
+    }
+    */
+    for (int i = 0; i < argc; i++) {
+        char *read = argv[i];
+        char *write = argv[i];
+        char currentQuote = '\0';
+
+        while (*read) {
+            if ((*read == '"' || *read == '\'') &&
+                (currentQuote == '\0' || currentQuote == *read)) {
+
+                currentQuote = (currentQuote == '\0') ? *read : '\0';
+                read++;
+            } else {
+                *write = *read;
+                write++;
+                read++;
+            }
+        }
+
+        *write = '\0';
+    }
 
     if (internal(argv[0], argv, state)) {
         return state->last_status;
@@ -115,6 +154,8 @@ int run_command(char **argv, int argc, ShellState *state) {
 
 static bool logical(char **argv, int argc, ShellState *state) {
     for (int i = 0; i < argc; i++) {
+        if (strchr(argv[i], '"') || strchr(argv[i], '\'')) continue;
+
         if (strcmp(argv[i], "&&") == 0 || strcmp(argv[i], "||") == 0) {
             char *left[1024];
             char *right[1024];

@@ -92,6 +92,7 @@ char **tokenize(char *input) {
         {
             if (c == quote)
             {
+                *writer++ = c;
                 quote = '\0';
             }
             else
@@ -115,36 +116,109 @@ char **tokenize(char *input) {
                 args[count++] = writer;
                 active = true;
             }
-
+            
+            *writer++ = c;
             reader++;
             continue;
         }
 
-
+        /*
         if (operator(c))
         {
-            if (active)
-            {
+            bool fd = false;
+            if (active && (c == '<' || c == '>')) {
+                char *chk = args[count - 1];
+                fd = true;
+                while (chk < writer) {
+                    if (!isdigit((unsigned char)*chk)) {
+                        fd = false;
+                        break;
+                    }
+                    chk++;
+                }
+            }
+
+            if (active && !is_fd) {
                 *writer++ = '\0';
                 active = false;
             }
 
-
-            args[count++] = writer;
+            if (!active) {
+                args[count++] = writer;
+                active = true;
+            }
 
             *writer++ = *reader++;
 
-            if ((*reader == c) &&
-                (c == '&' || c == '|' || c == '<' || c == '>'))
-            {
+            if ((*reader == c) && (c == '&' || c == '|' || c == '<' || c == '>')) {
                 *writer++ = *reader++;
+            }
+            
+            else if (*reader == '&' && (c == '<' || c == '>')) {
+                *writer++ = *reader++;
+                if (*reader == '-') {
+                    *writer++ = *reader++;
+                } else {
+                    while (isdigit((unsigned char)*reader)) {
+                        *writer++ = *reader++;
+                    }
+                }
             }
 
             *writer++ = '\0';
-
+            active = false;
             continue;
         }
+        */
+            
+        if (operator(c))
+        {
+            bool hasFd = false;
 
+            if (active && (c == '<' || c == '>')) {
+                char *token = args[count - 1];
+                hasFd = true;
+
+                while (token < writer) {
+                    if (!isdigit((unsigned char)*token)) {
+                        hasFd = false;
+                        break;
+                    }
+                    token++;
+                }
+            }
+
+            if (active && !hasFd) {
+                *writer++ = '\0';
+                active = false;
+            }
+
+            if (!active) {
+                args[count++] = writer;
+                active = true;
+            }
+
+            *writer++ = *reader++;
+
+            if (*reader == c && (c == '&' || c == '|' || c == '<' || c == '>')) {
+                *writer++ = *reader++;
+            } else if ((c == '<' || c == '>') && *reader == '&') {
+                *writer++ = *reader++;
+
+                if (*reader == '-') {
+                    *writer++ = *reader++;
+                } else {
+                    while (isdigit((unsigned char)*reader)) {
+                        *writer++ = *reader++;
+                    }
+                }
+
+            }   
+
+            *writer++ = '\0';
+            active = false;
+            continue;
+        }
 
         if (isspace((unsigned char)c))
         {
