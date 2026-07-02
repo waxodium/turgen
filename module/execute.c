@@ -1,4 +1,5 @@
 #include "turgen.h"
+#include "error.h"
 
 #include "execute.h"
 #include "terminal.h"
@@ -105,21 +106,7 @@ static int expanding(char **argv, int argc, char **final) {
 
 int run_command(char **argv, int argc, ShellState *state) {
     if (argc == 0) return 0;
-    /*
-    for (int i = 0; i < argc; i++) {
-        char *src = argv[i], *dst = argv[i];
-        char q = '\0';
-        while (*src) {
-            if ((*src == '"' || *src == '\'') && (q == '\0' || q == *src)) {
-                q = (q == '\0') ? *src : '\0';
-                src++;
-            } else {
-                *dst++ = *src++;
-            }
-        }
-        *dst = '\0';
-    }
-    */
+
     for (int i = 0; i < argc; i++) {
         char *read = argv[i];
         char *write = argv[i];
@@ -152,6 +139,7 @@ int run_command(char **argv, int argc, ShellState *state) {
     return state->last_status;
 }
 
+
 static bool logical(char **argv, int argc, ShellState *state) {
     for (int i = 0; i < argc; i++) {
         if (strchr(argv[i], '"') || strchr(argv[i], '\'')) continue;
@@ -164,10 +152,12 @@ static bool logical(char **argv, int argc, ShellState *state) {
 
             for (int j = 0; j < i; j++)
                 left[l++] = argv[j];
+            
             left[l] = NULL;
 
             for (int j = i + 1; j < argc; j++)
                 right[r++] = argv[j];
+            
             right[r] = NULL;
 
             bool success = false;
@@ -215,8 +205,16 @@ static int external(char **final) {
         execvp(final[0], final);
 
         if (errno == ENOENT) {
-            sout("\r%s: %s: command not found\r\n", shellname, final[0]);
+            _error(ERR_CMD_NOT_FOUND, final[0]);
             exit(127);
+        } else if (errno == EACCES) {
+            struct stat st;
+            if (stat(final[0], &st) == 0 && S_ISDIR(st.st_mode)) {
+                _error(ERR_IS_DIR, final[0]);
+            } else {
+                _error(ERR_DENIED, final[0]);
+            }
+            exit(126);
         }
 
         exit(1);
@@ -249,6 +247,59 @@ void execute(char *buffer, ShellState *state) {
     if (argc == 0) {
         free(argv);
         return;
+    }
+
+
+    for (int i = 0; i < argc; i++) {
+        if (strchr(argv[i], '"') || strchr(argv[i], '\'')) continue;
+
+        if (strcmp(argv[i], "|") == 0 || strcmp(argv[i], "&&") == 0 || 
+            strcmp(argv[i], "||") == 0 || strcmp(argv[i], ";") == 0) {
+            
+            if (i == 0 && strcmp(argv[i], ";") != 0) {
+                _error(ERR_SYNTAX, argv[i]);
+                state->last_status = 2;
+                free(argv[0]); free(argv); return;
+            }
+            if (i == argc - 1) {
+                _error(ERR_SYNTAX, argv[i]);
+                state->last_status = 2;
+                free(argv[0]); free(argv); return;
+            }
+            if (i + 1 < argc) {
+                char *next = argv[i + 1];
+                if (strcmp(next, "|") == 0 || strcmp(next, "&&") == 0 || 
+                    strcmp(next, "||") == 0 || strcmp(next, ";") == 0) {
+                    _error(ERR_SYNTAX, next);
+                    state->last_status = 2;
+                    free(argv[0]); free(argv); return;
+                }
+            }
+        }
+
+        if (strpbrk(argv[i], "<>") != NULL) {
+            size_t len = strlen(argv[i]);
+            
+            if (len > 0 && argv[i][len - 1] == '&') {
+                _error(ERR_SYNTAX, "&");
+                state->last_status = 2;
+                free(argv[0]); free(argv); return;
+            }
+            if (i == argc - 1) {
+                _error(ERR_SYNTAX, "newline");
+                state->last_status = 2;
+                free(argv[0]); free(argv); return;
+            }
+            
+            char *next = argv[i + 1];
+            if (strcmp(next, "|") == 0 || strcmp(next, "&&") == 0 || 
+                strcmp(next, "||") == 0 || strcmp(next, ";") == 0 || 
+                strpbrk(next, "<>") != NULL) {
+                _error(ERR_SYNTAX, next);
+                state->last_status = 2;
+                free(argv[0]); free(argv); return;
+            }
+        }
     }
 
     if (semicolon(argv, argc, state)) {

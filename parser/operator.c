@@ -1,4 +1,5 @@
 #include "turgen.h"
+#include "error.h"
 
 #define LIMIT 32
 
@@ -9,7 +10,6 @@ static int operator(char c) {
            c == '<' ||
            c == '>';
 }
-
 
 char **tokenize(char *input) {
     if (!input)
@@ -22,9 +22,7 @@ char **tokenize(char *input) {
     if (!args)
         return NULL;
 
-
     char *reader = input;
-    // char *writer = input;
     char *writer = malloc(strlen(input) * 2 + 1);
     if (!writer) {
         free(args);
@@ -35,10 +33,8 @@ char **tokenize(char *input) {
     char quote = '\0';
     bool escaped = false;
 
-
     while (*reader)
     {
-
         if (count >= cap - 1)
         {
             cap *= 2;
@@ -46,6 +42,7 @@ char **tokenize(char *input) {
             char **tmp = realloc(args, cap * sizeof(char *));
             if (!tmp)
             {
+                free(writer);
                 free(args);
                 return NULL;
             }
@@ -53,9 +50,7 @@ char **tokenize(char *input) {
             args = tmp;
         }
 
-
         char c = *reader;
-
 
         if (escaped)
         {
@@ -66,12 +61,10 @@ char **tokenize(char *input) {
             }
 
             *writer++ = c;
-
             escaped = false;
             reader++;
             continue;
         }
-
 
         if (c == '\\' && quote != '\'')
         {
@@ -86,7 +79,6 @@ char **tokenize(char *input) {
             reader++;
             continue;
         }
-
 
         if (quote)
         {
@@ -104,9 +96,6 @@ char **tokenize(char *input) {
             continue;
         }
 
-
-
-
         if (c == '\'' || c == '"')
         {
             quote = c;
@@ -121,55 +110,6 @@ char **tokenize(char *input) {
             reader++;
             continue;
         }
-
-        /*
-        if (operator(c))
-        {
-            bool fd = false;
-            if (active && (c == '<' || c == '>')) {
-                char *chk = args[count - 1];
-                fd = true;
-                while (chk < writer) {
-                    if (!isdigit((unsigned char)*chk)) {
-                        fd = false;
-                        break;
-                    }
-                    chk++;
-                }
-            }
-
-            if (active && !is_fd) {
-                *writer++ = '\0';
-                active = false;
-            }
-
-            if (!active) {
-                args[count++] = writer;
-                active = true;
-            }
-
-            *writer++ = *reader++;
-
-            if ((*reader == c) && (c == '&' || c == '|' || c == '<' || c == '>')) {
-                *writer++ = *reader++;
-            }
-            
-            else if (*reader == '&' && (c == '<' || c == '>')) {
-                *writer++ = *reader++;
-                if (*reader == '-') {
-                    *writer++ = *reader++;
-                } else {
-                    while (isdigit((unsigned char)*reader)) {
-                        *writer++ = *reader++;
-                    }
-                }
-            }
-
-            *writer++ = '\0';
-            active = false;
-            continue;
-        }
-        */
             
         if (operator(c))
         {
@@ -212,7 +152,6 @@ char **tokenize(char *input) {
                         *writer++ = *reader++;
                     }
                 }
-
             }   
 
             *writer++ = '\0';
@@ -232,7 +171,6 @@ char **tokenize(char *input) {
             continue;
         }
 
-
         if (!active)
         {
             args[count++] = writer;
@@ -243,15 +181,19 @@ char **tokenize(char *input) {
         reader++;
     }
 
-
     if (active)
     {
         *writer++ = '\0';
     }
 
+    if (quote) {
+        char q_str[2] = {quote, '\0'};
+        _error(ERR_SYNTAX, q_str);
+        free(writer);
+        free(args);
+        return NULL;
+    }
 
     args[count] = NULL;
-
     return args;
 }
-
