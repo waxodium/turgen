@@ -180,7 +180,7 @@ void input(ShellState *state, char character, char *prompt) {
         
         // TAB key
         case 9:
-            if (strstr(state->buffer, "//")) {
+            if (strchr(state->buffer, '/')) {
                 TabTree(state);
                 return;
             }

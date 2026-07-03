@@ -48,18 +48,21 @@ static bool semicolon(char **argv, int argc, ShellState *state) {
 
 static bool internal(char *command, char **argv, ShellState *state) {
     struct stat info;
+    char path[1024];
 
-    if (strcmp(command, "..") == 0 || strchr(command, '/') != NULL) {
-        if (stat(command, &info) == 0 && S_ISDIR(info.st_mode)) {
-            char path[1024];
+    if (strcmp(command, "..") == 0 || strchr(command, '/') != NULL || command[0] == '~') {
+        
+        if (command[0] == '~') {
+            char *home = getenv("HOME");
+            snprintf(path, sizeof(path), "%s%s", home ? home : "", command + 1);
+        } else if (command[0] != '/' && command[0] != '.') {
+            joinPath(path, sizeof(path), ".", command);
+        } else {
+            strncpy(path, command, sizeof(path) - 1);
+            path[sizeof(path) - 1] = '\0';
+        }
 
-            if (command[0] != '/' && command[0] != '.' && command[0] != '~') {
-                joinPath(path, sizeof(path), ".", command);
-            } else {
-                strncpy(path, command, sizeof(path) - 1);
-                path[sizeof(path) - 1] = '\0';
-            }
-
+        if (stat(path, &info) == 0 && S_ISDIR(info.st_mode)) {
             char *args[] = {
                 "cd",
                 path,
@@ -84,6 +87,7 @@ static bool internal(char *command, char **argv, ShellState *state) {
 
     return false;
 }
+
 
 static int expanding(char **argv, int argc, char **final) {
     int count = 0;
@@ -286,7 +290,7 @@ void execute(char *buffer, ShellState *state) {
                 free(argv[0]); free(argv); return;
             }
             if (i == argc - 1) {
-                _error(ERR_SYNTAX, "newline");
+                _error(ERR_SYNTAX, argv[i]);
                 state->last_status = 2;
                 free(argv[0]); free(argv); return;
             }
