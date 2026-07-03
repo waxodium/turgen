@@ -1,5 +1,5 @@
 # Turgen Shell
-Turgen Shell is a C-Shell made for fast-paced and convenient usage, for Unix/Linux platform.
+Turgen Shell is a C-Shell meant for fast paced usage, **Unix GNU/Linux** platform.
 
 > [!NOTE]
 > Still working on it..
@@ -8,42 +8,23 @@ Turgen Shell is a C-Shell made for fast-paced and convenient usage, for Unix/Lin
 
 ## Install
 
-### Build Turgen
-1. Clone the turgen repository: ``github.com/waxodium/turgen``
+### Build from source
 ```bash
-git clone https://github.com/waxodium/turgen.git
-cd turgen
-```
-2. Once in turgen. Use ``make run`` to run turgen
-```bash
-make run
-```
+git clone --depth 1 https://github.com/waxodium/turgen.git && cd turgen
 
-Other Makefile target rules:
-* ``make build`` : compile without running.
-* ``make clean``: clean up.
+# May need to export ~/.local/bin as PATH 
+make install CC=gcc
+```
 
 ## Contributing
-If anyone would like to contribute or even help. You're always be welcomed. As this repository is small yet there's numerous task that had to do. It is maintained by a single person right now. That's why help is needed!
+If you love to, please kindly take your time reading [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-Even if it's small like code cleaning, fixing issue, enhancement. On any scale of changes as long as you're writing code here. Contributing is open at anytime. 
-
-If you love to, please kindly take your time reading [CONTRIBUTING.md](./CONTRIBUTING.md) then progressively read and learn the codebase from [DOCUMENTATION.md](./DOCUMENTATION.md)
-
-## Availability
-Turgen doesn't have repository on any package manager registry. The only source is on this repository you're reading, RIGHT NOW.
-
-turgen will **soon** have installable packages through:
-- AUR (Arch User Repository)
-- DNF (Dandified YUM)
 
 ## LICENSE
-This software, [Turgen], is proprietary-licensed content made available exclusively under the terms and conditions of the [GNU Affero General Public License v3.0]. Any modification, distribution, or network-based service deployment of this software is strictly conditioned upon full compliance with the aforementioned license. All rights reserved by the authors.
+This software, [Turgen], is proprietary-licensed content made available exclusively under the terms and conditions of the [GNU Affero General Public License v3.0]. 
 
 
 --- 
 
 [turgen]: https://github.com/waxodium/turgen
 [GNU Affero General Public License v3.0]: https://github.com/waxodium/turgen/blob/main/LICENSE
-
-

@@ -1,20 +1,28 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -Werror -Ilib -Imodule -Icommand -Iui -Iinclude -Iinclude/module -Iinclude/command -Iinclude/ui -Iinclude/parser
+CC     ?= gcc
+CFLAGS ?= -Wall -Wextra -Werror
 
-SRC    = main.c $(wildcard lib/*.c) $(wildcard module/*.c) $(wildcard command/*.c) $(wildcard ui/*.c) $(wildcard parser/*.c)
-BUILD = ./build
+INCLUDES = -Ilib -Imodule -Icommand -Iui -Iinclude \
+           -Iinclude/module -Iinclude/command -Iinclude/ui -Iinclude/parser
+
+SRC    = main.c $(wildcard lib/*.c) $(wildcard module/*.c) \
+         $(wildcard command/*.c) $(wildcard ui/*.c) $(wildcard parser/*.c)
+BUILD  = ./build
 TARGET = $(BUILD)/turgen
+
+.PHONY: all run install clean
 
 all: $(TARGET)
 
 $(TARGET): $(SRC)
 	@mkdir -p $(BUILD)
-	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
+	$(CC) $(CFLAGS) $(INCLUDES) $(SRC) -o $(TARGET)
 
 run: $(TARGET)
 	$(TARGET)
 
-clean:
-	rm -r $(BUILD)
+install: $(TARGET)
+	mkdir -p ~/.local/bin
+	cp $(TARGET) ~/.local/bin/
 
-.PHONY: all run clean
+clean:
+	rm -rf $(BUILD)
