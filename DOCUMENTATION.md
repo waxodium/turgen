@@ -66,7 +66,7 @@ Installation with turgen's `make install` may require to export `~/.local/bin/` 
 # How to code for Turgen Shell
 
 ## Enviroment
-Turgen Shell development enviroment uses [C23](https://en.wikipedia.org/wiki/C23_(C_standard_revision) which is the standard C revision
+Turgen Shell development enviroment uses [C23](https://en.wikipedia.org/wiki/C23_(C_standard_revision)) which is the standard C revision
 
 The **Turgen shell** codebase is designed to be *architecture-neutral*.
 For platform **GNU/Linux & Unix**
