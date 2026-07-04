@@ -1,16 +1,27 @@
+
 # Contributing to Turgen Shell
-Turgen Shell, welcome!
-- **Explore the Code**: If you are new, start by reading the code to understand how the turgen shell source code works together.
 
-- **Find an Issue**: Look through *Turgen Shell's* [Issue Tracker](https://github.com/waxodium/turgen/issues) for tasks labeled `good first issue` or `help wanted`.
+Welcome to Turgen Shell! We are excited to have you here.Whether you are fixing a bug, imporving documentation (DOCUMENTATION.md), or suggesting new features, your contributions make this project better for everyone.
 
-- **Reach Out**: If you are unsure about an idea or need help understanding, please don't hesitate to [open a Discussion](https://github.com/waxodium/turgen/discussions/) or reach out to me directly. I am happy to chat and walk you through.
+## How to Get Started
 
-- **Create an Issue**: If you spot a flaw, or bugs. Please, may freely [Open an Issue](https://github.com/waxodium/turgen/issues) on turgen repository
 
-- **Submit a Pull Request**: You should be familiar with the basics of [Github Contributing](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests). Write your changes base on the turgen latest tree.
+1. **Explore the Code**: Take a look around the codebase to undersand how the shell modules interact. Feel free to ask questions if anything looks unfamiliar!
 
----
+2. **Find an Issue**: Browse our *Turgen Shell's* [Issue Tracker](https://github.com/waxodium/turgen/issues) for tasks labeled `good first issue` or `help wanted`.
 
+3. **Claim Your Task**: Comment on the issue stating that you would like to work on it so a maintainer can offically assign it to you
+
+
+## Contribution Workflow
+
+We follow the standard Fork-and-Pull-Request model :
+
+1. **Fork  the Repository**: Create your own copy of the project by clicking the **Fork** button at the top right of the main repo-page.
+
+2.**Clone Locally** : Clone your newly forked repository to your local computer:
+
+```bash
+git clone [https://github.com/YOUR_USERNAME/turgen.git](https://github.com/YOUR_USERNAME/turgen.git)
 
 
