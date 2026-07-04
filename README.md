@@ -1,7 +1,7 @@
 # Turgen Shell
-Turgen Shell is a C-Shell meant for fast paced usage, **Unix GNU/Linux** platform.
+Turgen Shell is a is non POSIX-Compliance shell designed for fast paced usage, **Unix GNU/Linux** platform.
 
-> [!NOTE]
+> [!WARNING]
 > Still working on it..
 > Expect breaking changes!
 <img width="204" height="192" alt="construction" src="https://github.com/user-attachments/assets/b39bf03f-1b5b-410c-ac64-e953735b936a" />
@@ -28,3 +28,4 @@ This software, [Turgen], is proprietary-licensed content made available exclusiv
 
 [turgen]: https://github.com/waxodium/turgen
 [GNU Affero General Public License v3.0]: https://github.com/waxodium/turgen/blob/main/LICENSE
+
