@@ -1,10 +1,9 @@
-#include <termios.h>
-
 #ifndef navigation
 #define navigation
 
 
 #include "render.h"
+#include "turgen.h"
 
 int tclear(char **argv, ShellState *state);
 int texit(char **argv, ShellState *state);

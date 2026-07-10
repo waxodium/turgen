@@ -1,13 +1,12 @@
 #include "turgen.h"
 
-#include "input.h"
 #include "sout.h"
 #include "render.h"
 #include "terminal.h"
 #include "prompter.h"
 #include "tree.h"
 
-void execute(char *buffer);
+void execute(char *buffer, ShellState *state);
 
 static char history[100][4096];
 static int historyCount = 0;
@@ -15,13 +14,34 @@ static int historyView = 0;
 
 extern struct termios Terminal;
 
+
+//Continuation prompt
+static int endquote(char *string) {
+    char quote = '\0';
+    int escape = 0;
+    
+    for (int i = 0; string[i]; i++) {
+        if (escape) {
+            escape = 0;
+        } else if (string[i] == '\\') {
+            escape = 1;
+        } else if (string[i] == quote) {
+            quote = '\0';
+        } else if (quote == '\0' && (string[i] == '"' || string[i] == '\'')) {
+            quote = string[i];
+        }
+    }
+    return (quote != '\0' || escape);
+}
+
 void input(ShellState *state, char character, char *prompt) {
-    int old_cursor = state->cursor;
+    state->term_width = width(); 
+    int old_row = render_getrow(state, state->cursor);
     int renderAble = 0;
 
     switch (character) {
         
-        // CTRL-A: To beginning line
+        // CTRL-A To beginning line
         case 1:
             state->cursor = 0;
             renderAble = 1;
@@ -38,7 +58,7 @@ void input(ShellState *state, char character, char *prompt) {
             sout("%s", prompt);
             return;
 
-        // CTRL-E: To end of line
+        // CTRL-E To end of line
         case 5:
             state->cursor = state->length;
             renderAble = 1;
@@ -46,6 +66,19 @@ void input(ShellState *state, char character, char *prompt) {
 
         // Enter key
         case 13:
+            if (endquote(state->buffer)) {
+                if (state->length < 4095) {
+                    for (int i = state->length; i > state->cursor; i--) {
+                        state->buffer[i] = state->buffer[i - 1];
+                    }
+                    state->buffer[state->cursor++] = '\n';
+                    state->length++;
+                    state->buffer[state->length] = '\0';
+                    render_update(state, old_row);
+                }
+                return;
+            }
+
             state->buffer[state->length] = '\0';
             sout("\r\n");
             
@@ -62,7 +95,7 @@ void input(ShellState *state, char character, char *prompt) {
                     historyCount++;
                 }
 
-                execute(state->buffer);
+                execute(state->buffer, state);
                 prompter(prompt, 256);
             }
             
@@ -82,16 +115,15 @@ void input(ShellState *state, char character, char *prompt) {
                 state->buffer[state->length] = '\0';
                 renderAble = 1;    
             }
-            break; 
+            break;
 
-        // (Arrows, HOME, END, CTRL+Arrows)
+        // Arrows
         case 27: {
             char seq[2];
             if (read(STDIN_FILENO, &seq[0], 1) <= 0 || read(STDIN_FILENO, &seq[1], 1) <= 0) {
                 break;
             }
 
-            // Regular Arrows
             
             // Up
             if (seq[0] == '[' && seq[1] == 'A' && historyView > 0) {
@@ -132,7 +164,6 @@ void input(ShellState *state, char character, char *prompt) {
                 break;
             }
 
-            // 2. Home and End Keys
             
             // Home
             if ((seq[0] == '[' && seq[1] == 'H') || (seq[0] == 'O' && seq[1] == 'H')) {
@@ -148,7 +179,7 @@ void input(ShellState *state, char character, char *prompt) {
                 break;
             }
 
-            // 3. CTRL + Arrows
+            // CTRL + Arrows
             if (seq[0] == '[' && seq[1] == '1') {
                 char semi, mod, dir;
                 if (read(STDIN_FILENO, &semi, 1) <= 0) break;
@@ -203,6 +234,6 @@ void input(ShellState *state, char character, char *prompt) {
     }
 
     if (renderAble) {
-        render_update(state, old_cursor);
+        render_update(state, old_row);
     }
 }

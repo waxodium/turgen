@@ -9,9 +9,9 @@ typedef int (*Handler)(char **, ShellState *);
 typedef struct {
     const char *name;
     Handler func;
-} Command;
+} innate;
 
-static Command builtins[] = {
+static innate builtins[] = {
     {"cls",   tclear},
     {"exit",  texit}, 
     {"cd",    cd},

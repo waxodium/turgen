@@ -12,6 +12,9 @@ typedef struct {
 
 void render_init(ShellState *state, const char *prompt);
 void render_update(ShellState *state, int old_cursor);
+int render_getrow(ShellState *state, int index);
+void render_update(ShellState *state, int old_row);
+
 int width();
 
 void append_str(char *frame, int *pos, const char *str);

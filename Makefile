@@ -1,11 +1,23 @@
 CC     ?= gcc
 CFLAGS ?= -Wall -Wextra -Werror
 
-INCLUDES = -Ilib -Imodule -Icommand -Iui -Iinclude \
-           -Iinclude/module -Iinclude/command -Iinclude/ui -Iinclude/parser
+INCLUDES = -Isrc \
+           -Isrc/lib \
+           -Isrc/include \
+           -Isrc/include/builtins \
+           -Isrc/include/parser \
+           -Isrc/include/proc \
+           -Isrc/include/tui \
+           -Isrc/include/utils
 
-SRC    = main.c $(wildcard lib/*.c) $(wildcard module/*.c) \
-         $(wildcard command/*.c) $(wildcard ui/*.c) $(wildcard parser/*.c)
+SRC    = src/main.c \
+         $(wildcard src/builtins/*.c) \
+         $(wildcard src/lib/*.c) \
+         $(wildcard src/parser/*.c) \
+         $(wildcard src/proc/*.c) \
+         $(wildcard src/tui/*.c) \
+         $(wildcard src/utils/*.c)
+
 BUILD  = ./build
 TARGET = $(BUILD)/turgen
 
