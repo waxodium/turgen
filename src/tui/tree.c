@@ -113,8 +113,11 @@ void DrawUI(char *Frame, int *position, int selected, int start, int border) {
 }
 
 void TabTree(ShellState *state) {
+    int original_row = render_getrow(state, state->cursor);
     char *space = strrchr(state->buffer, ' ');
     char *prefix;
+
+
     if (space != NULL) {
         prefix = space + 1;
     } else {
@@ -170,9 +173,10 @@ void TabTree(ShellState *state) {
     
     int selected = 0;
     int start = 0;
-    struct termios orig, raw;
-    tcgetattr(STDIN_FILENO, &orig);
-    raw = orig;
+    struct termios original, raw;
+    
+    tcgetattr(STDIN_FILENO, &original);
+    raw = original;
     raw.c_lflag &= ~(ECHO | ICANON);
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 
@@ -235,8 +239,15 @@ void TabTree(ShellState *state) {
             break;
     }
 
+    /*
     write(STDOUT_FILENO, "\r\033[J\033[1A\r\033[K", 13);
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig);
     write(STDOUT_FILENO, "\033[?25h", 6);
-    render_update(state, 0);
+    render_update(state, original_row);
+    */
+
+    write(STDOUT_FILENO, "\r\033[J\033[1A", 8);
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &original);
+    write(STDOUT_FILENO, "\033[?25h", 6);
+    render_update(state, original_row);
 }

@@ -1,5 +1,5 @@
 # Turgen Shell
-Turgen Shell is a is non POSIX-Compliance shell designed for fast paced usage, **Unix GNU/Linux** platform.
+Turgen Shell is a is non POSIX-Compliance shell designed for fast paced usage, made for **Unix GNU/Linux** platform.
 
 > [!WARNING]
 > Still working on it..

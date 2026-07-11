@@ -35,8 +35,8 @@ static bool attatchedfile(char *text) {
 
 // -- Syntax Error
 
-static bool verifySyntax_ERR(Token *tok, ShellState *state) {
-    _error(ERR_SYNTAX, tok->text);
+static bool verifySyntax_ERR(Token *token, ShellState *state) {
+    _error(ERR_SYNTAX, token->text);
     state->last_status = 2;
     return false;
 }
