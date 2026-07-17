@@ -104,9 +104,15 @@ int cd(char **argv, ShellState *state) {
         }
         target = home;
     } 
+    
     else if (strcmp(target, "..") == 0) {
         target = "..";
-    } 
+    }
+
+    else if (strcmp(target, "...") == 0) {
+        target = "../..";
+    }
+
     else if (strncmp(target, "~/", 2) == 0) {
         if (!home) {
             sout("\r%s: cd: HOME not set\r\n", shellname);

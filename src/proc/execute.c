@@ -39,15 +39,20 @@ static bool internal(char *command, char **argv, ShellState *state) {
     if (strchr(command, '/') != NULL) is_path = true;
     if (command[0] == '~') is_path = true;
 
+
+
     if (is_path) {
         if (command[0] == '~') {
             char *home = getenv("HOME");
             if (!home) {
                 home = "";
             }
+            
             snprintf(path, sizeof(path), "%s%s", home, command + 1);
+        
         } else if (command[0] != '/' && command[0] != '.') {
             joinPath(path, sizeof(path), ".", command);
+        
         } else {
             strncpy(path, command, sizeof(path) - 1);
             path[sizeof(path) - 1] = '\0';
@@ -57,7 +62,10 @@ static bool internal(char *command, char **argv, ShellState *state) {
             char *args[] = {"cd", path, NULL};
             return run_builtin("cd", args, state);
         }
+        
+
     }
+
 
     return run_builtin(command, argv, state);
 }
@@ -247,3 +255,4 @@ void execute(char *buffer, ShellState *state) {
 
     free(tokens);
 }
+
