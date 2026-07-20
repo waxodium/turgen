@@ -3,6 +3,7 @@
 
 #include "navigation.h"
 #include "echo.h"
+#include "jobs.h"
 
 typedef int (*Handler)(char **, ShellState *);
 
@@ -15,7 +16,7 @@ static innate builtins[] = {
     {"cls",   tclear},
     {"exit",  texit}, 
     {"cd",    cd},
-    {"echo", echo}
+    {"echo", echo},
 };
 
 #endif
