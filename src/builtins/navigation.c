@@ -10,18 +10,7 @@
 #define PathMax 4096
 
 
-// Rewritten with some memset
-/*
-    tclear() is just a function that properly clears the
-    terminal includes it's scrollback buffer.
 
-    But linux/utils clear command doesn't
-    It's a visual bug from linux/utils clear command
-
-    So,
-    [!NOTE] Do not remove.
-
-*/
 int 
 tclear(char **argv, ShellState *state) {
     (void) **argv;

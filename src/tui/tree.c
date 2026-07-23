@@ -239,13 +239,6 @@ void TabTree(ShellState *state) {
             break;
     }
 
-    /*
-    write(STDOUT_FILENO, "\r\033[J\033[1A\r\033[K", 13);
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig);
-    write(STDOUT_FILENO, "\033[?25h", 6);
-    render_update(state, original_row);
-    */
-
     write(STDOUT_FILENO, "\r\033[J\033[1A", 8);
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &original);
     write(STDOUT_FILENO, "\033[?25h", 6);

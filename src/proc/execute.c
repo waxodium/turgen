@@ -35,14 +35,22 @@ static bool internal(char *command, char **argv, ShellState *state) {
     char path[1024];
     bool is_path = false;
 
-    if (strcmp(command, "..") == 0) is_path = true;
+    if (strcmp(command, "..") == 0 || strcmp(command, "...") == 0) {
+        is_path = true;
+    }
+
     if (strchr(command, '/') != NULL) is_path = true;
     if (command[0] == '~') is_path = true;
 
 
 
     if (is_path) {
-        if (command[0] == '~') {
+        if (strcmp(command, "...") == 0) {
+            snprintf(path, sizeof(path), "../..");
+        } 
+
+        else if(command[0] == '~') {
+            
             char *home = getenv("HOME");
             if (!home) {
                 home = "";
