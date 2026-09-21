@@ -10,6 +10,10 @@ static bool operator_control(TokenType type) {
     return type == TOKEN_SEMICOLON || type == TOKEN_AND || type == TOKEN_OR || type == TOKEN_PIPE;
 }
 
+static bool operator_background(TokenType type) {
+    return type == TOKEN_BACKGROUND;
+}
+
 static bool operator_redir(TokenType type) {
     return type == TOKEN_LESS || type == TOKEN_GREATER || type == TOKEN_DGREATER;
 }
@@ -46,7 +50,7 @@ static bool verifySyntax(Token *tokens, int count, ShellState *state) {
         return true;
     }
 
-    if (operator_control(tokens[0].type)) {
+    if (operator_control(tokens[0].type) || operator_background(tokens[0].type)) {
         return verifySyntax_ERR(&tokens[0], state);
     }
 
@@ -59,8 +63,17 @@ static bool verifySyntax(Token *tokens, int count, ShellState *state) {
             }
         }
 
+        if (operator_background(type)) {
+            if (i + 1 < count) {
+                return verifySyntax_ERR(&tokens[i], state);
+            }
+        }
+
         if (operator_redir(type) && !attatchedfile(tokens[i].text)) {
-            if (i + 1 >= count || operator_control(tokens[i + 1].type) || operator_redir(tokens[i + 1].type)) {
+            if (i + 1 >= count ||
+                operator_control(tokens[i + 1].type) ||
+                operator_background(tokens[i + 1].type) ||
+                operator_redir(tokens[i + 1].type)) {
                 return verifySyntax_ERR(&tokens[i], state);
             }
         }
@@ -78,6 +91,11 @@ static Command* parse_command(Token *tokens, int start, int end) {
 
     if (!cmd) {
         return NULL;
+    }
+
+    if (tokens[end - 1].type == TOKEN_BACKGROUND) {
+        cmd->background = true;
+        end--;
     }
 
     int max_items = end - start;

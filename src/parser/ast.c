@@ -13,6 +13,7 @@ Command* create_command(CommandType type) {
     cmd->arg_count = 0;
     cmd->redirs = NULL;
     cmd->redir_count = 0;
+    cmd->background = false;
     cmd->left = NULL;
     cmd->right = NULL;
 

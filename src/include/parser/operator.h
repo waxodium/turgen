@@ -18,6 +18,7 @@ typedef enum {
     TOKEN_AND,
     TOKEN_OR,
     TOKEN_PIPE,
+    TOKEN_BACKGROUND,
     TOKEN_LESS,
     TOKEN_GREATER,
     TOKEN_DGREATER

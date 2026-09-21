@@ -22,11 +22,13 @@ static int matchoperator(Token *t, char c, char next) {
     if (c == '&' && next == '&') { t->text = strdup("&&"); t->type = TOKEN_AND; return 2; }
     if (c == '|' && next == '|') { t->text = strdup("||"); t->type = TOKEN_OR; return 2; }
     if (c == '>' && next == '>') { t->text = strdup(">>"); t->type = TOKEN_DGREATER; return 2; }
-    
+
+    if (c == '&') { t->text = strdup("&"); t->type = TOKEN_BACKGROUND; return 1; }
     if (c == ';') { t->text = strdup(";"); t->type = TOKEN_SEMICOLON; return 1; }
     if (c == '|') { t->text = strdup("|"); t->type = TOKEN_PIPE; return 1; }
     if (c == '<') { t->text = strdup("<"); t->type = TOKEN_LESS; return 1; }
     if (c == '>') { t->text = strdup(">"); t->type = TOKEN_GREATER; return 1; }
+
     return 0;
 }
 

@@ -20,6 +20,8 @@ typedef struct Command {
     Redirection *redirs;
     int redir_count;
 
+    bool background;
+
     struct Command *left;
     struct Command *right;
 } Command;
